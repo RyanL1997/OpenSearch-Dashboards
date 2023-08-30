@@ -183,6 +183,26 @@ export class HttpConfig {
     this.compression = rawHttpConfig.compression;
     this.csp = new CspConfig(rawCspConfig);
     this.xsrf = rawHttpConfig.xsrf;
+    let listUpdated = false; // Flag to check if the list was updated
+    const originalAllowlist = [...this.xsrf.whitelist];
+    const updatedAllowlist = this.xsrf.whitelist.map((url) => {
+      if (
+        url === '/_opendistro/_security/saml/acs' ||
+        url === '/_opendistro/_security/saml/acs/idpinitiated'
+      ) {
+        listUpdated = true;
+        return url.replace('_opendistro', '_plugin');
+      }
+      return url;
+    });
+    if (listUpdated) {
+      // Log the original and updated xsrf whitelists?
+      // console.log('Original xsrf whitelist: ' + JSON.stringify(originalAllowlist)); // <---- we can also add a msg here to let the user know the legacy prefix will be deprecated soon
+      // console.log('Updated xsrf whitelist: ' + JSON.stringify(updatedAllowlist));
+
+      // Assign the modified whitelist back to this.xsrf.whitelist
+      this.xsrf = { ...this.xsrf, whitelist: updatedAllowlist };
+    }
     this.requestId = rawHttpConfig.requestId;
   }
 }

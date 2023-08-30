@@ -297,4 +297,29 @@ describe('HttpConfig', () => {
       nested: '{"foo":1,"bar":"dolly"}',
     });
   });
+
+  it('updates opendistro URLs in xsrf whitelist', () => {
+    const initialAllowlist = [
+      '/_opendistro/_security/saml/acs',
+      '/_opendistro/_security/saml/acs/idpinitiated',
+      '/some/other/url',
+    ];
+
+    const expectedUpdatedWhitelist = [
+      '/_plugin/_security/saml/acs',
+      '/_plugin/_security/saml/acs/idpinitiated',
+      '/some/other/url',
+    ];
+
+    const rawConfig = config.schema.validate({
+      xsrf: {
+        whitelist: initialAllowlist,
+      },
+    });
+
+    const httpConfig = new HttpConfig(rawConfig, CspConfig.DEFAULT);
+
+    // Validate that the whitelist was updated as expected
+    expect(httpConfig.xsrf.whitelist).toEqual(expectedUpdatedWhitelist);
+  });
 });
