@@ -77,6 +77,19 @@ export function OpenSearchPanel({ onClose, makeUrl }: Props) {
         </EuiTitle>
       </EuiFlyoutHeader>
       <EuiFlyoutBody>
+        <EuiTitle size="s">
+          <h2>
+            <FormattedMessage
+              id="discover.topNav.openSearchPanel.openSearchBodyTitle"
+              defaultMessage="Open options"
+            />
+          </h2>
+        </EuiTitle>
+        <EuiSpacer size="s" />
+        <EuiText size="s" color="subdued">
+          <p>Select waht you would like to open</p>
+        </EuiText>
+        <EuiSpacer size="s" />
         <EuiFlexGroup direction="row" gutterSize="s">
           <EuiFlexItem>
             <EuiCheckableCard
