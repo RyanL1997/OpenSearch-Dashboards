@@ -86,7 +86,7 @@ export function OpenSearchPanel({ onClose, makeUrl }: Props) {
         </EuiTitle>
       </EuiFlyoutHeader>
       <EuiFlyoutBody>
-        <EuiFlexGroup direction="row" gutterSize="s" style={{ alignItems: 'stretch' }}>
+        <EuiFlexGroup direction="row" gutterSize="s">
           <EuiFlexItem>
             <EuiCheckableCard
               id="openQueryCard"
@@ -121,51 +121,55 @@ export function OpenSearchPanel({ onClose, makeUrl }: Props) {
           </EuiFlexItem>
         </EuiFlexGroup>
         <EuiSpacer size="m" />
-        <SavedObjectFinderUi
-          noItemsMessage={
-            <FormattedMessage
-              id="discover.topNav.openSearchPanel.noSearchesFoundDescription"
-              defaultMessage="No matching searches found."
-            />
-          }
-          savedObjectMetaData={[
-            {
-              type: SAVED_OBJECT_TYPE,
-              getIconForSavedObject: () => 'search',
-              name: i18n.translate('discover.savedSearch.savedObjectName', {
-                defaultMessage: 'Saved search',
-              }),
-            },
-          ]}
-          onChoose={(id) => {
-            application.navigateToApp('discover', { path: `#/view/${id}` });
-            onClose();
-          }}
-          uiSettings={uiSettings}
-          savedObjects={savedObjects}
-        />
-      </EuiFlyoutBody>
-      <EuiFlyoutFooter>
-        <EuiFlexGroup justifyContent="flexEnd">
-          <EuiFlexItem grow={false}>
-            {/* eslint-disable-next-line @elastic/eui/href-or-on-click */}
-            <EuiButton
-              fill
-              onClick={onClose}
-              href={addBasePath(
-                `/app/management/opensearch-dashboards/objects?_a=${rison.encode({
-                  tab: SAVED_OBJECT_TYPE,
-                })}`
-              )}
-            >
+        {selectedCardId === 'openSearchCard' && (
+          <SavedObjectFinderUi
+            noItemsMessage={
               <FormattedMessage
-                id="discover.topNav.openSearchPanel.manageSearchesButtonLabel"
-                defaultMessage="Manage searches"
+                id="discover.topNav.openSearchPanel.noSearchesFoundDescription"
+                defaultMessage="No matching searches found."
               />
-            </EuiButton>
-          </EuiFlexItem>
-        </EuiFlexGroup>
-      </EuiFlyoutFooter>
+            }
+            savedObjectMetaData={[
+              {
+                type: SAVED_OBJECT_TYPE,
+                getIconForSavedObject: () => 'search',
+                name: i18n.translate('discover.savedSearch.savedObjectName', {
+                  defaultMessage: 'Saved search',
+                }),
+              },
+            ]}
+            onChoose={(id) => {
+              application.navigateToApp('discover', { path: `#/view/${id}` });
+              onClose();
+            }}
+            uiSettings={uiSettings}
+            savedObjects={savedObjects}
+          />
+        )}
+      </EuiFlyoutBody>
+      {selectedCardId === 'openSearchCard' && (
+        <EuiFlyoutFooter>
+          <EuiFlexGroup justifyContent="flexEnd">
+            <EuiFlexItem grow={false}>
+              {/* eslint-disable-next-line @elastic/eui/href-or-on-click */}
+              <EuiButton
+                fill
+                onClick={onClose}
+                href={addBasePath(
+                  `/app/management/opensearch-dashboards/objects?_a=${rison.encode({
+                    tab: SAVED_OBJECT_TYPE,
+                  })}`
+                )}
+              >
+                <FormattedMessage
+                  id="discover.topNav.openSearchPanel.manageSearchesButtonLabel"
+                  defaultMessage="Manage searches"
+                />
+              </EuiButton>
+            </EuiFlexItem>
+          </EuiFlexGroup>
+        </EuiFlyoutFooter>
+      )}
     </EuiFlyout>
   );
 }
