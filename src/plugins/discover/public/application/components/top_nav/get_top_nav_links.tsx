@@ -24,7 +24,7 @@ import { DOC_HIDE_TIME_COLUMN_SETTING, SORT_DEFAULT_ORDER_SETTING } from '../../
 import { getSortForSearchSource } from '../../view_components/utils/get_sort_for_search_source';
 import { getRootBreadcrumbs } from '../../helpers/breadcrumbs';
 import { syncQueryStateWithUrl } from '../../../../../data/public';
-import { OpenSearchPanel } from './open_search_panel';
+import { OpenSearchPanel } from './open_panel';
 
 export const getTopNavLinks = (
   services: DiscoverViewServices,

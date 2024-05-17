@@ -45,7 +45,7 @@ jest.mock('../../../../../opensearch_dashboards_react/public', () => ({
   withOpenSearchDashboards: jest.fn(),
 }));
 
-import { OpenSearchPanel } from './open_search_panel';
+import { OpenSearchPanel } from './open_panel';
 
 test('render', () => {
   const component = shallow(<OpenSearchPanel onClose={() => {}} makeUrl={(id) => id} />);
