@@ -29,26 +29,24 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import rison from 'rison-node';
-import { i18n } from '@osd/i18n';
 import { FormattedMessage } from '@osd/i18n/react';
 import {
-  EuiButton,
   EuiFlexGroup,
   EuiFlexItem,
   EuiFlyout,
   EuiFlyoutHeader,
-  EuiFlyoutFooter,
   EuiFlyoutBody,
   EuiTitle,
   EuiCheckableCard,
   EuiSpacer,
   EuiText,
 } from '@elastic/eui';
-import { SavedObjectFinderUi } from '../../../../../saved_objects/public';
-import { useOpenSearchDashboards } from '../../../../../opensearch_dashboards_react/public';
-import { DiscoverViewServices } from '../../../build_services';
-import { SAVED_OBJECT_TYPE } from '../../../saved_searches/_saved_search';
+import {
+  OpenQueryContent,
+  OpenQueryFooter,
+  OpenSearchContent,
+  OpenSearchFooter,
+} from './open_content';
 
 interface Props {
   onClose: () => void;
@@ -56,13 +54,6 @@ interface Props {
 }
 
 export function OpenSearchPanel({ onClose, makeUrl }: Props) {
-  const {
-    services: {
-      core: { uiSettings, savedObjects, application },
-      addBasePath,
-    },
-  } = useOpenSearchDashboards<DiscoverViewServices>();
-
   const [selectedCardId, setSelectedCardId] = useState<string>('openQueryCard');
 
   const onChangeCard = (id: string) => {
@@ -121,55 +112,11 @@ export function OpenSearchPanel({ onClose, makeUrl }: Props) {
           </EuiFlexItem>
         </EuiFlexGroup>
         <EuiSpacer size="m" />
-        {selectedCardId === 'openSearchCard' && (
-          <SavedObjectFinderUi
-            noItemsMessage={
-              <FormattedMessage
-                id="discover.topNav.openSearchPanel.noSearchesFoundDescription"
-                defaultMessage="No matching searches found."
-              />
-            }
-            savedObjectMetaData={[
-              {
-                type: SAVED_OBJECT_TYPE,
-                getIconForSavedObject: () => 'search',
-                name: i18n.translate('discover.savedSearch.savedObjectName', {
-                  defaultMessage: 'Saved search',
-                }),
-              },
-            ]}
-            onChoose={(id) => {
-              application.navigateToApp('discover', { path: `#/view/${id}` });
-              onClose();
-            }}
-            uiSettings={uiSettings}
-            savedObjects={savedObjects}
-          />
-        )}
+        {selectedCardId === 'openQueryCard' && <OpenQueryContent />}
+        {selectedCardId === 'openSearchCard' && <OpenSearchContent onClose={onClose} />}
       </EuiFlyoutBody>
-      {selectedCardId === 'openSearchCard' && (
-        <EuiFlyoutFooter>
-          <EuiFlexGroup justifyContent="flexEnd">
-            <EuiFlexItem grow={false}>
-              {/* eslint-disable-next-line @elastic/eui/href-or-on-click */}
-              <EuiButton
-                fill
-                onClick={onClose}
-                href={addBasePath(
-                  `/app/management/opensearch-dashboards/objects?_a=${rison.encode({
-                    tab: SAVED_OBJECT_TYPE,
-                  })}`
-                )}
-              >
-                <FormattedMessage
-                  id="discover.topNav.openSearchPanel.manageSearchesButtonLabel"
-                  defaultMessage="Manage searches"
-                />
-              </EuiButton>
-            </EuiFlexItem>
-          </EuiFlexGroup>
-        </EuiFlyoutFooter>
-      )}
+      {selectedCardId === 'openQueryCard' && <OpenQueryFooter onClose={onClose} />}
+      {selectedCardId === 'openSearchCard' && <OpenSearchFooter onClose={onClose} />}
     </EuiFlyout>
   );
 }
