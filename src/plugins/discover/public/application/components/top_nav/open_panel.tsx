@@ -87,7 +87,12 @@ export function OpenSearchPanel({ onClose, makeUrl }: Props) {
         </EuiTitle>
         <EuiSpacer size="s" />
         <EuiText size="s" color="subdued">
-          <p>Select waht you would like to open</p>
+          <p>
+            <FormattedMessage
+              id="discover.topNav.openSearchPanel.selectOptionDescription"
+              defaultMessage="Select what you would like to open"
+            />
+          </p>
         </EuiText>
         <EuiSpacer size="s" />
         <EuiFlexGroup direction="row" gutterSize="s">
@@ -96,10 +101,20 @@ export function OpenSearchPanel({ onClose, makeUrl }: Props) {
               id="openQueryCard"
               label={
                 <div>
-                  <strong>Open query</strong>
+                  <strong>
+                    <FormattedMessage
+                      id="discover.topNav.openSearchPanel.openQueryCardTitle"
+                      defaultMessage="Open query"
+                    />
+                  </strong>
                   <EuiSpacer size="s" />
                   <EuiText size="s" color="subdued">
-                    <p>Open a query and filters that you want to use again.</p>
+                    <p>
+                      <FormattedMessage
+                        id="discover.topNav.openSearchPanel.openQueryCardDescription"
+                        defaultMessage="Open a query and filters that you want to use again."
+                      />
+                    </p>
                   </EuiText>
                 </div>
               }
@@ -112,10 +127,20 @@ export function OpenSearchPanel({ onClose, makeUrl }: Props) {
               id="openSearchCard"
               label={
                 <div>
-                  <strong>Open search</strong>
+                  <strong>
+                    <FormattedMessage
+                      id="discover.topNav.openSearchPanel.openSearchCardTitle"
+                      defaultMessage="Open search"
+                    />
+                  </strong>
                   <EuiSpacer size="s" />
                   <EuiText size="s" color="subdued">
-                    <p>Open your full Discover search.</p>
+                    <p>
+                      <FormattedMessage
+                        id="discover.topNav.openSearchPanel.openSearchCardDescription"
+                        defaultMessage="Open your full Discover search."
+                      />
+                    </p>
                   </EuiText>
                 </div>
               }
