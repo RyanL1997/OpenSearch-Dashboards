@@ -28,7 +28,7 @@
  * under the License.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import rison from 'rison-node';
 import { i18n } from '@osd/i18n';
 import { FormattedMessage } from '@osd/i18n/react';
@@ -41,6 +41,9 @@ import {
   EuiFlyoutFooter,
   EuiFlyoutBody,
   EuiTitle,
+  EuiCheckableCard,
+  EuiSpacer,
+  EuiText,
 } from '@elastic/eui';
 import { SavedObjectFinderUi } from '../../../../../saved_objects/public';
 import { useOpenSearchDashboards } from '../../../../../opensearch_dashboards_react/public';
@@ -60,6 +63,16 @@ export function OpenSearchPanel({ onClose, makeUrl }: Props) {
     },
   } = useOpenSearchDashboards<DiscoverViewServices>();
 
+  const [selectedCardId, setSelectedCardId] = useState<string>('openQueryCard');
+
+  const onChangeCard = (id: string) => {
+    setSelectedCardId(id);
+  };
+
+  useEffect(() => {
+    setSelectedCardId('openQueryCard');
+  }, []);
+
   return (
     <EuiFlyout ownFocus onClose={onClose} data-test-subj="loadSearchForm">
       <EuiFlyoutHeader hasBorder>
@@ -67,12 +80,47 @@ export function OpenSearchPanel({ onClose, makeUrl }: Props) {
           <h2>
             <FormattedMessage
               id="discover.topNav.openSearchPanel.openSearchTitle"
-              defaultMessage="OpenSearch"
+              defaultMessage="Open"
             />
           </h2>
         </EuiTitle>
       </EuiFlyoutHeader>
       <EuiFlyoutBody>
+        <EuiFlexGroup direction="row" gutterSize="s" style={{ alignItems: 'stretch' }}>
+          <EuiFlexItem>
+            <EuiCheckableCard
+              id="openQueryCard"
+              label={
+                <div>
+                  <strong>Open query</strong>
+                  <EuiSpacer size="s" />
+                  <EuiText size="s" color="subdued">
+                    <p>Open a query and filters that you want to use again.</p>
+                  </EuiText>
+                </div>
+              }
+              checked={selectedCardId === 'openQueryCard'}
+              onChange={() => onChangeCard('openQueryCard')}
+            />
+          </EuiFlexItem>
+          <EuiFlexItem>
+            <EuiCheckableCard
+              id="openSearchCard"
+              label={
+                <div>
+                  <strong>Open search</strong>
+                  <EuiSpacer size="s" />
+                  <EuiText size="s" color="subdued">
+                    <p>Open your full Discover search.</p>
+                  </EuiText>
+                </div>
+              }
+              checked={selectedCardId === 'openSearchCard'}
+              onChange={() => onChangeCard('openSearchCard')}
+            />
+          </EuiFlexItem>
+        </EuiFlexGroup>
+        <EuiSpacer size="m" />
         <SavedObjectFinderUi
           noItemsMessage={
             <FormattedMessage
