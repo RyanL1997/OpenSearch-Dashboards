@@ -140,3 +140,6 @@ export {
   SigV4Content,
   DataSourceAttributes,
 } from '../../data_source/common/data_sources';
+
+// flint datasources types
+export type DatasourceType = 'S3GLUE' | 'PROMETHEUS';
