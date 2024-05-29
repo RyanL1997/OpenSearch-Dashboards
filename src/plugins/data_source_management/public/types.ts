@@ -143,3 +143,5 @@ export {
 
 // flint datasources types
 export type DatasourceType = 'S3GLUE' | 'PROMETHEUS';
+
+export type DatasourceStatus = 'ACTIVE' | 'DISABLED';
