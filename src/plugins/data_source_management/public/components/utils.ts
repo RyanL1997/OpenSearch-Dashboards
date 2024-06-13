@@ -341,3 +341,20 @@ export interface HideLocalCluster {
 export const [getHideLocalCluster, setHideLocalCluster] = createGetterSetter<HideLocalCluster>(
   'HideLocalCluster'
 );
+
+export const formatError = (name: string, message: string, details: string) => {
+  return {
+    name,
+    message,
+    body: {
+      attributes: {
+        error: {
+          caused_by: {
+            type: '',
+            reason: details,
+          },
+        },
+      },
+    },
+  };
+};
