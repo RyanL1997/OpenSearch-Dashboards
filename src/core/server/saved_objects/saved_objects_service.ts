@@ -106,6 +106,11 @@ import { Config } from '../config';
  * @public
  */
 export interface SavedObjectsServiceSetup {
+  createSerializer: () => SavedObjectsSerializer;
+  /**
+   * The registry containing all registered {@link SavedObjectsType | saved object types}
+   */
+  getTypeRegistry: () => SavedObjectTypeRegistry;
   /**
    * Set the default {@link SavedObjectsClientFactoryProvider | factory provider} for creating Saved Objects clients.
    * Only one provider can be set, subsequent calls to this method will fail.
@@ -242,6 +247,7 @@ export interface SavedObjectsServiceStart {
    * Creates a {@link SavedObjectsSerializer | serializer} that is aware of all registered types.
    */
   createSerializer: () => SavedObjectsSerializer;
+
   /**
    * Returns the {@link ISavedObjectTypeRegistry | registry} containing all registered
    * {@link SavedObjectsType | saved object types}
@@ -349,6 +355,8 @@ export class SavedObjectsService
     });
 
     return {
+      getTypeRegistry: () => this.typeRegistry,
+      createSerializer: () => new SavedObjectsSerializer(this.typeRegistry),
       status$: this.savedObjectServiceStatus$.asObservable(),
       setClientFactoryProvider: (provider) => {
         if (this.started) {

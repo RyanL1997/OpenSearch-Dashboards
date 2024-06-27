@@ -93,6 +93,24 @@ export const DataSourceTable = ({ history }: RouteComponentProps) => {
       });
   };
 
+  const fetchQlDataSources = () => {
+    setIsLoading(true);
+    getDataSources(savedObjects.qlClient)
+      .then((response: DataSourceTableItem[]) => {
+        setDataSources(response);
+      })
+      .catch(() => {
+        setDataSources([]);
+        handleDisplayToastMessage({
+          id: 'dataSourcesManagement.dataSourceListing.fetchDataSourceFailMsg',
+          defaultMessage: 'Error occurred while fetching the records for Data sources.',
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
   /* Table search config */
   const renderDeleteButton = () => {
     return (

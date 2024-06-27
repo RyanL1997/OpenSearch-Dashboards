@@ -30,6 +30,7 @@
 
 export {
   SavedObjectsRepository,
+  QlSavedObjectsRepository,
   SavedObjectsClientProvider,
   ISavedObjectsClientProvider,
   SavedObjectsClientProviderOptions,

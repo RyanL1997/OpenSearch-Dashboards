@@ -43,3 +43,5 @@ export {
 export { SavedObjectsErrorHelpers } from './errors';
 
 export { SavedObjectsUtils } from './utils';
+
+export { IQlSavedObjectsRepository, QlSavedObjectsRepository } from './repository_ql_datasources';
