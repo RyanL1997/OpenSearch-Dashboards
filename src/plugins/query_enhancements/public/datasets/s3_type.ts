@@ -139,6 +139,7 @@ const fetch = async (
 };
 
 const setMeta = (dataStructure: DataStructure, response: any) => {
+  console.log('the response in setMeta', response);
   return {
     ...dataStructure.meta,
     queryId: response.queryId,

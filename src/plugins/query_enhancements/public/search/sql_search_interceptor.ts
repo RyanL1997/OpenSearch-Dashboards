@@ -44,8 +44,22 @@ export class SQLSearchInterceptor extends SearchInterceptor {
     };
 
     if (isAsync) this.notifications.toasts.add('Fetching data...');
+
     return fetch(context, this.queryService.queryString.getQuery()).pipe(
-      tap(() => isAsync && this.notifications.toasts.addSuccess('Fetch complete...')),
+      tap((response) => {
+        // Assuming sessionId is part of the response object
+        const sessionId = response.body.meta.sessionId;
+        console.log('here is the response', response);
+        console.log('here is the session id!!!!', sessionId);
+        console.log('is this async?', isAsync);
+        if (isAsync && sessionId) {
+          this.notifications.toasts.addSuccess(`Fetch complete with session ID: ${sessionId}`);
+
+          // Store sessionId in session storage
+          sessionStorage.setItem('sessionId', sessionId);
+          console.log('here is the session storge', sessionStorage.getItem('sessionId'));
+        }
+      }),
       catchError((error) => {
         return throwError(error);
       })
@@ -54,6 +68,8 @@ export class SQLSearchInterceptor extends SearchInterceptor {
 
   public search(request: IOpenSearchDashboardsSearchRequest, options: ISearchOptions) {
     const dataset = this.queryService.queryString.getQuery().dataset;
+    console.log('here is the dataset', dataset);
+    console.log('here is the dataset meta session id', dataset?.dataSource?.meta?.sessionId);
     const datasetType = dataset?.type;
     let strategy = datasetType === DATASET.S3 ? SEARCH_STRATEGY.SQL_ASYNC : SEARCH_STRATEGY.SQL;
 
