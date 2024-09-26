@@ -143,12 +143,12 @@ export const DataSourceHomePanel: React.FC<DataSourceHomePanelProps> = ({
               controls={connectionTypeButton}
             />
           )}
-          {canManageDataSource && (
+          {/* {canManageDataSource && (
             <HeaderControl
               setMountPoint={application.setAppRightControls}
               controls={createDataSourceButton}
             />
-          )}
+          )} */}
           <HeaderControl
             setMountPoint={application.setAppDescriptionControls}
             controls={[
@@ -181,7 +181,7 @@ export const DataSourceHomePanel: React.FC<DataSourceHomePanelProps> = ({
                       featureFlagStatus={featureFlagStatus}
                     />
                   </EuiFlexItem>
-                  {canManageDataSource ? (
+                  {/* {canManageDataSource ? (
                     <EuiFlexItem grow={false}>
                       <CreateButton
                         history={props.history}
@@ -189,7 +189,7 @@ export const DataSourceHomePanel: React.FC<DataSourceHomePanelProps> = ({
                         dataTestSubj="createDataSourceButton"
                       />
                     </EuiFlexItem>
-                  ) : null}
+                  ) : null} */}
                 </EuiFlexGroup>
               </EuiPageHeader>
             </EuiFlexItem>

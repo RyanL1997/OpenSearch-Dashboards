@@ -364,7 +364,7 @@ export const DataSourceTable = ({ history }: RouteComponentProps) => {
             />
           </EuiText>
           <EuiSpacer />
-          {canManageDataSource ? createButtonEmptyState : null}
+          {/* {canManageDataSource ? createButtonEmptyState : null} */}
         </EuiPanel>
         <EuiSpacer size="l" />
       </>

@@ -96,14 +96,14 @@ export async function mountManagementSection(
             <CreateDataSourceWizardWithRouter />
           </Route>
         )}
-        {canManageDataSource && (
+        {/* {canManageDataSource && (
           <Route path={['/configure/:type']}>
             <ConfigureDirectQueryDataSourceWithRouter
               notifications={notifications}
               useNewUX={useNewUX}
             />
           </Route>
-        )}
+        )} */}
         {featureFlagStatus && (
           <Route path={['/:id']}>
             <EditDataSourceWithRouter />
