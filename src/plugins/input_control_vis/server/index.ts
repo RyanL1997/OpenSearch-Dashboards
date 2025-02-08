@@ -55,6 +55,7 @@ export const plugin = (initializerContext: PluginInitializerContext) => ({
         const legacyConfig = await initializerContext.config.legacy.globalConfig$
           .pipe(first())
           .toPromise();
+        console.log('legacyConfig', legacyConfig);
         return response.ok({
           body: {
             autocompleteTimeout: legacyConfig.opensearchDashboards.autocompleteTimeout.asMilliseconds(),

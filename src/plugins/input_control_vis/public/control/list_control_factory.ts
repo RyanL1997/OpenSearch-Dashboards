@@ -152,7 +152,12 @@ export class ListControl extends Control<PhraseFilterManager> {
     const initialSearchSourceState: SearchSourceFields = {
       timeout: `${settings.autocompleteTimeout}ms`,
       terminate_after: Number(settings.autocompleteTerminateAfter),
+      // terminate_after: 0, - we don't need to change this because we have changed the configuration root with its default value
     };
+    console.log('terminate_after', initialSearchSourceState.terminate_after);
+    console.log('settings of t_a', settings.autocompleteTerminateAfter);
+    console.log('settings', settings);
+
     const aggs = termsAgg({
       field: indexPattern.fields.getByName(fieldName),
       size: this.options.dynamicOptions ? null : _.get(this.options, 'size', 5),
