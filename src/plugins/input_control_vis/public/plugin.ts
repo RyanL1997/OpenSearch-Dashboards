@@ -86,6 +86,7 @@ export class InputControlVisPlugin implements Plugin<void, void> {
           this.cachedSettings = await core.http.get<InputControlSettings>(
             '/api/input_control_vis/settings'
           );
+          console.log('InputControlVisPlugin: settings', this.cachedSettings);
         }
 
         return this.cachedSettings;
