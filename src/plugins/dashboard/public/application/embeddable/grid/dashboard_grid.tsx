@@ -299,7 +299,6 @@ class DashboardGridUi extends React.Component<DashboardGridProps, State> {
 
     const { viewMode } = this.state;
     const isViewMode = viewMode === ViewMode.VIEW;
-
     return (
       <ResponsiveSizedGrid
         isViewMode={isViewMode}

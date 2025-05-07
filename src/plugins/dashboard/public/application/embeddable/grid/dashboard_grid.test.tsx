@@ -42,14 +42,12 @@ import {
   ContactCardEmbeddableFactory,
 } from '../../../../../embeddable/public/lib/test_samples';
 import { embeddablePluginMock } from '../../../../../embeddable/public/mocks';
-import { createDashboardServicesMock } from '../../utils/mocks';
 import { OpenSearchDashboardsContextProvider } from '../../../../../opensearch_dashboards_react/public';
 
 let dashboardContainer: DashboardContainer | undefined;
 
 function prepare(props?: Partial<DashboardGridProps>) {
   const { setup, doStart } = embeddablePluginMock.createInstance();
-
   setup.registerEmbeddableFactory(
     CONTACT_CARD_EMBEDDABLE,
     new ContactCardEmbeddableFactory((() => null) as any, {} as any)
@@ -62,18 +60,15 @@ function prepare(props?: Partial<DashboardGridProps>) {
       '1': {
         gridData: { x: 0, y: 0, w: 6, h: 6, i: '1' },
         type: CONTACT_CARD_EMBEDDABLE,
-        explicitInput: { id: '1', savedObjectId: 'vis-1' },
+        explicitInput: { id: '1' },
       },
       '2': {
         gridData: { x: 6, y: 6, w: 6, h: 6, i: '2' },
         type: CONTACT_CARD_EMBEDDABLE,
-        explicitInput: { id: '2', savedObjectId: 'vis-2' },
+        explicitInput: { id: '2' },
       },
     },
   });
-
-  const services = createDashboardServicesMock();
-
   const options: DashboardContainerOptions = {
     application: {} as any,
     embeddable: {
@@ -93,21 +88,12 @@ function prepare(props?: Partial<DashboardGridProps>) {
     uiActions: {
       getTriggerCompatibleActions: (() => []) as any,
     } as any,
-    savedObjectsClient: {} as any,
-    http: {} as any,
-    dashboardFeatureFlagConfig: {
-      directQueryConnectionSync: true,
-    } as any,
   };
-
   dashboardContainer = new DashboardContainer(initialInput, options);
-
   const defaultTestProps: DashboardGridProps = {
     container: dashboardContainer,
     PanelComponent: () => <div />,
-    opensearchDashboards: {
-      services,
-    },
+    opensearchDashboards: null as any,
     intl: null as any,
   };
 
