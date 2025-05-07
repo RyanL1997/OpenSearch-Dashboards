@@ -198,9 +198,8 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
       useMargins,
     } = this.state;
 
-    const extractedProps = this.syncService.getExtractedProps();
-    const shouldRenderSyncUI =
-      this.syncService.isDirectQuerySyncEnabled() && extractedProps !== null;
+    const shouldRenderSyncUI = this.syncService.shouldRenderSyncUI();
+    const syncUIProps = this.syncService.getSyncUIProps();
 
     return (
       <div
@@ -218,12 +217,7 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
           />
         )}
         {shouldRenderSyncUI && (
-          <DashboardDirectQuerySync
-            loadStatus={this.props.loadStatus}
-            lastRefreshTime={extractedProps?.lastRefreshTime}
-            refreshInterval={extractedProps?.refreshInterval}
-            onSynchronize={this.syncService.synchronizeNow}
-          />
+          <DashboardDirectQuerySync loadStatus={this.props.loadStatus} {...syncUIProps} />
         )}
         <DashboardGrid container={container} PanelComponent={PanelComponent} />
       </div>

@@ -23,6 +23,12 @@ interface DirectQuerySyncState {
   panelMetadata: Array<{ panelId: string; savedObjectId: string; type: string }>;
 }
 
+export interface DirectQuerySyncUIProps {
+  lastRefreshTime?: number;
+  refreshInterval?: number;
+  onSynchronize: () => void;
+}
+
 export class DirectQuerySyncService {
   private savedObjectsClient: SavedObjectsClientContract;
   private http: HttpStart;
@@ -136,6 +142,27 @@ export class DirectQuerySyncService {
    */
   public getExtractedProps(): { lastRefreshTime?: number; refreshInterval?: number } | null {
     return this.state.extractedProps;
+  }
+
+  /**
+   * Determines if the direct query sync UI should be rendered.
+   * Returns true if the feature is enabled and extracted props are available.
+   */
+  public shouldRenderSyncUI(): boolean {
+    const extractedProps = this.getExtractedProps();
+    return this.isDirectQuerySyncEnabled() && extractedProps !== null;
+  }
+
+  /**
+   * Returns the props needed to render the direct query sync UI (excluding loadStatus).
+   */
+  public getSyncUIProps(): DirectQuerySyncUIProps {
+    const extractedProps = this.getExtractedProps();
+    return {
+      lastRefreshTime: extractedProps?.lastRefreshTime,
+      refreshInterval: extractedProps?.refreshInterval,
+      onSynchronize: () => this.synchronizeNow(),
+    };
   }
 
   /**

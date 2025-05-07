@@ -4,8 +4,11 @@
  */
 
 import { DirectQuerySyncService } from './direct_query_sync_services';
-import { extractIndexInfoFromDashboard, generateRefreshQuery } from './direct_query_sync';
-import { isDirectQuerySyncEnabledByUrl } from './direct_query_sync_url_flag';
+import {
+  extractIndexInfoFromDashboard,
+  generateRefreshQuery,
+} from '../../utils/direct_query_sync/direct_query_sync';
+import { isDirectQuerySyncEnabledByUrl } from '../../utils/direct_query_sync/direct_query_sync_url_flag';
 
 // Mock dependencies
 jest.mock('../../utils/direct_query_sync/direct_query_sync');
@@ -213,6 +216,122 @@ describe('DirectQuerySyncService', () => {
 
       await service.collectAllPanelMetadata({} as any);
       expect((service as any).areDataSourceParamsValid()).toBe(false);
+    });
+  });
+
+  describe('shouldRenderSyncUI', () => {
+    let service: DirectQuerySyncService;
+
+    beforeEach(() => {
+      (extractIndexInfoFromDashboard as jest.Mock).mockReset();
+      (isDirectQuerySyncEnabledByUrl as jest.Mock).mockReset();
+      service = new DirectQuerySyncService({
+        savedObjectsClient: {} as any,
+        http: {} as any,
+        startLoading: startLoadingSpy,
+        setMdsId: setMdsIdSpy,
+        isDirectQuerySyncEnabled: true,
+        queryLang: undefined,
+      });
+    });
+
+    test('returns true when feature is enabled and extracted props are available', async () => {
+      (isDirectQuerySyncEnabledByUrl as jest.Mock).mockReturnValue(true);
+      (extractIndexInfoFromDashboard as jest.Mock).mockResolvedValue({
+        parts: {
+          datasource: 'datasource',
+          database: 'database',
+          index: 'index',
+        },
+        mapping: { lastRefreshTime: 12345, refreshInterval: 30000 },
+        mdsId: 'mds-1',
+      });
+
+      await service.collectAllPanelMetadata({} as any);
+      expect(service.shouldRenderSyncUI()).toBe(true);
+    });
+
+    test('returns false when feature is disabled', () => {
+      (isDirectQuerySyncEnabledByUrl as jest.Mock).mockReturnValue(false);
+      service = new DirectQuerySyncService({
+        savedObjectsClient: {} as any,
+        http: {} as any,
+        startLoading: startLoadingSpy,
+        setMdsId: setMdsIdSpy,
+        isDirectQuerySyncEnabled: false,
+        queryLang: undefined,
+      });
+
+      expect(service.shouldRenderSyncUI()).toBe(false);
+    });
+
+    test('returns false when extracted props are not available', async () => {
+      (isDirectQuerySyncEnabledByUrl as jest.Mock).mockReturnValue(true);
+      (extractIndexInfoFromDashboard as jest.Mock).mockResolvedValue(null);
+
+      await service.collectAllPanelMetadata({} as any);
+      expect(service.shouldRenderSyncUI()).toBe(false);
+    });
+  });
+
+  describe('getSyncUIProps', () => {
+    let service: DirectQuerySyncService;
+
+    beforeEach(() => {
+      (extractIndexInfoFromDashboard as jest.Mock).mockReset();
+      (isDirectQuerySyncEnabledByUrl as jest.Mock).mockReturnValue(true);
+      // Ensure generateRefreshQuery is mocked for synchronizeNow calls
+      (generateRefreshQuery as jest.Mock).mockReturnValue(mockRefreshQuery);
+      service = new DirectQuerySyncService({
+        savedObjectsClient: {} as any,
+        http: {} as any,
+        startLoading: startLoadingSpy,
+        setMdsId: setMdsIdSpy,
+        isDirectQuerySyncEnabled: true,
+        queryLang: undefined,
+      });
+    });
+
+    test('returns correct props when extracted props are available', async () => {
+      (extractIndexInfoFromDashboard as jest.Mock).mockResolvedValue({
+        parts: {
+          datasource: 'datasource',
+          database: 'database',
+          index: 'index',
+        },
+        mapping: { lastRefreshTime: 12345, refreshInterval: 30000 },
+        mdsId: 'mds-1',
+      });
+
+      await service.collectAllPanelMetadata({} as any);
+      const props = service.getSyncUIProps();
+
+      expect(props).toEqual({
+        lastRefreshTime: 12345,
+        refreshInterval: 30000,
+        onSynchronize: expect.any(Function),
+      });
+
+      // Verify onSynchronize calls synchronizeNow
+      props.onSynchronize();
+      expect(startLoadingSpy).toHaveBeenCalledWith({
+        query: mockRefreshQuery,
+        lang: 'sql',
+        datasource: 'datasource',
+      });
+    });
+
+    test('returns undefined props when extracted props are not available', async () => {
+      (extractIndexInfoFromDashboard as jest.Mock).mockResolvedValue(null);
+
+      await service.collectAllPanelMetadata({} as any);
+      const props = service.getSyncUIProps();
+
+      expect(props).toEqual({
+        lastRefreshTime: undefined,
+        refreshInterval: undefined,
+        onSynchronize: expect.any(Function),
+      });
     });
   });
 
