@@ -11,7 +11,7 @@ import { EMR_STATES, intervalAsMinutes } from '../../utils/direct_query_sync/dir
 import './_dashboard_direct_query_sync.scss';
 
 export interface DashboardDirectQuerySyncProps {
-  loadStatus: DirectQueryLoadingStatus;
+  loadStatus?: DirectQueryLoadingStatus;
   lastRefreshTime?: number;
   refreshInterval?: number;
   onSynchronize: () => void;
@@ -23,7 +23,8 @@ export const DashboardDirectQuerySync: React.FC<DashboardDirectQuerySyncProps> =
   refreshInterval,
   onSynchronize,
 }) => {
-  const state = EMR_STATES.get(loadStatus)!;
+  // If loadStatus is undefined, default to a non-terminal state to avoid errors
+  const state = loadStatus ? EMR_STATES.get(loadStatus)! : { ord: 0, terminal: false };
 
   return (
     <div className="dshDashboardGrid__syncBar" data-test-subj="dashboardDirectQuerySyncBar">

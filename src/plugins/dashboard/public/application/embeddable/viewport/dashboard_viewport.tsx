@@ -41,10 +41,13 @@ import { DashboardContainer, DashboardReactContextValue } from '../dashboard_con
 import { DashboardGrid } from '../grid';
 import { context } from '../../../../../opensearch_dashboards_react/public';
 import {
-  useDirectQuery,
   DirectQueryRequest,
   DirectQueryLoadingStatus,
 } from '../../../../../data_source_management/public';
+import { useDirectQuery } from '../../../../../data_source_management/public';
+import { DirectQuerySyncService } from '../../../application/embeddable/services/direct_query_sync_services';
+import { EMR_STATES } from '../../utils/direct_query_sync/direct_query_sync';
+
 export interface DashboardViewportProps {
   container: DashboardContainer;
   PanelComponent: EmbeddableStart['EmbeddablePanel'];
@@ -53,10 +56,11 @@ export interface DashboardViewportProps {
   savedObjectsClient: SavedObjectsClientContract;
   http: HttpStart;
   notifications: NotificationsStart;
-  startLoading: (payload: DirectQueryRequest) => void;
-  loadStatus: DirectQueryLoadingStatus;
-  pollingResult: any;
+  startLoading?: (payload: DirectQueryRequest) => void;
+  loadStatus?: DirectQueryLoadingStatus;
+  pollingResult?: any;
   isDirectQuerySyncEnabled: boolean;
+  queryLang?: string;
   setMdsId?: (mdsId?: string) => void;
 }
 
@@ -76,6 +80,8 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
   public readonly context!: DashboardReactContextValue;
   private subscription?: Subscription;
   private mounted: boolean = false;
+  private syncService: DirectQuerySyncService;
+
   constructor(props: DashboardViewportProps) {
     super(props);
     const {
@@ -95,6 +101,31 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
       isEmbeddedExternally,
       isEmptyState,
     };
+
+    // Initialize the DirectQuerySyncService
+    this.syncService = new DirectQuerySyncService({
+      savedObjectsClient: this.props.savedObjectsClient,
+      http: this.props.http,
+      startLoading: (payload: DirectQueryRequest) => {
+        // This will be set by DashboardViewportWithQuery
+        if (this.props.startLoading) {
+          this.props.startLoading(payload);
+        }
+      },
+      setMdsId: (mdsId?: string) => {
+        // This will be set by DashboardViewportWithQuery
+        if (this.props.setMdsId) {
+          this.props.setMdsId(mdsId);
+        }
+      },
+      isDirectQuerySyncEnabled: this.props.isDirectQuerySyncEnabled,
+      queryLang: this.props.queryLang,
+    });
+
+    // Initial metadata collection
+    if (this.syncService.isDirectQuerySyncEnabled()) {
+      this.syncService.collectAllPanelMetadata(panels);
+    }
   }
 
   public componentDidMount() {
@@ -107,6 +138,7 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
         description,
         isEmbeddedExternally,
         isEmptyState,
+        panels,
       } = this.props.container.getInput();
       if (this.mounted) {
         this.setState({
@@ -116,7 +148,9 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
           title,
           isEmbeddedExternally,
           isEmptyState,
+          panels,
         });
+        this.syncService.updatePanels(panels);
       }
     });
   }
@@ -126,6 +160,7 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
+    this.syncService.destroy();
   }
 
   public onExitFullScreenMode = () => {
@@ -152,7 +187,7 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
   }
 
   private renderContainerScreen() {
-    const { container, PanelComponent, startLoading, loadStatus, pollingResult } = this.props;
+    const { container, PanelComponent } = this.props;
     const {
       isEmbeddedExternally,
       isFullScreenMode,
@@ -161,6 +196,11 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
       description,
       useMargins,
     } = this.state;
+
+    const extractedProps = this.syncService.getExtractedProps();
+    const shouldRenderSyncUI =
+      this.syncService.isDirectQuerySyncEnabled() && extractedProps !== null;
+
     return (
       <div
         data-shared-items-count={Object.values(panels).length}
@@ -179,20 +219,28 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
         <DashboardGrid
           container={container}
           PanelComponent={PanelComponent}
-          savedObjectsClient={this.props.savedObjectsClient}
-          http={this.props.http}
-          notifications={this.props.notifications}
-          startLoading={startLoading}
-          loadStatus={loadStatus}
-          pollingResult={pollingResult}
-          isDirectQuerySyncEnabled={this.props.isDirectQuerySyncEnabled}
-          setMdsId={this.props.setMdsId}
+          shouldRenderSyncUI={shouldRenderSyncUI}
+          loadStatus={this.props.loadStatus}
+          lastRefreshTime={extractedProps?.lastRefreshTime}
+          refreshInterval={extractedProps?.refreshInterval}
+          onSynchronize={this.syncService.synchronizeNow}
         />
       </div>
     );
   }
 
   public render() {
+    const emrState = EMR_STATES.get(this.props.loadStatus as string);
+
+    if (
+      emrState?.terminal &&
+      this.props.loadStatus !== DirectQueryLoadingStatus.FRESH &&
+      this.props.loadStatus !== DirectQueryLoadingStatus.FAILED &&
+      this.props.loadStatus !== DirectQueryLoadingStatus.CANCELLED
+    ) {
+      window.location.reload();
+    }
+
     return (
       <React.Fragment>
         {this.state.isEmptyState ? this.renderEmptyScreen() : null}
