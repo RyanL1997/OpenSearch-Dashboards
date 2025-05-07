@@ -45,7 +45,7 @@ import {
   DirectQueryLoadingStatus,
 } from '../../../../../data_source_management/public';
 import { useDirectQuery } from '../../../../../data_source_management/public';
-import { DirectQuerySyncService } from '../../../application/embeddable/services/direct_query_sync_services';
+import { DirectQuerySyncService } from '../../utils/direct_query_sync/direct_query_sync_services';
 import { EMR_STATES } from '../../utils/direct_query_sync/direct_query_sync';
 
 export interface DashboardViewportProps {

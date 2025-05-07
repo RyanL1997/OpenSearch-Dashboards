@@ -5,12 +5,9 @@
 
 import { SavedObjectsClientContract, HttpStart } from 'src/core/public';
 import { DirectQueryRequest } from '../../../../../data_source_management/public';
-import {
-  extractIndexInfoFromDashboard,
-  generateRefreshQuery,
-} from '../../utils/direct_query_sync/direct_query_sync';
-import { isDirectQuerySyncEnabledByUrl } from '../../utils/direct_query_sync/direct_query_sync_url_flag';
-import { DashboardPanelState } from '../';
+import { extractIndexInfoFromDashboard, generateRefreshQuery } from './direct_query_sync';
+import { isDirectQuerySyncEnabledByUrl } from './direct_query_sync_url_flag';
+import { DashboardPanelState } from '../../embeddable';
 
 interface DirectQuerySyncServiceProps {
   savedObjectsClient: SavedObjectsClientContract;
