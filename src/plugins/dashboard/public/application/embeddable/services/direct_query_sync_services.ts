@@ -61,10 +61,10 @@ export class DirectQuerySyncService {
 
   /**
    * Determines the query language to use for direct query sync.
-   * Returns the provided queryLang if specified; otherwise, defaults to 'sql' if the feature is enabled.
+   * Returns the provided queryLang if specified and non-empty; otherwise, defaults to 'sql' if the feature is enabled.
    */
   public getQueryLanguage(): string {
-    if (this.queryLang) {
+    if (this.queryLang !== undefined && this.queryLang !== '') {
       return this.queryLang;
     }
     return this.isDirectQuerySyncEnabled() ? 'sql' : '';
@@ -85,11 +85,14 @@ export class DirectQuerySyncService {
   public async collectAllPanelMetadata(panels: { [key: string]: DashboardPanelState }) {
     if (!this.isDirectQuerySyncEnabled()) return;
 
-    const indexInfo = await extractIndexInfoFromDashboard(
-      panels,
-      this.savedObjectsClient,
-      this.http
-    );
+    let indexInfo;
+    try {
+      indexInfo = await extractIndexInfoFromDashboard(panels, this.savedObjectsClient, this.http);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Caught error in collectAllPanelMetadata:', error);
+      indexInfo = null;
+    }
 
     if (indexInfo) {
       this.extractedDatasource = indexInfo.parts.datasource;
