@@ -101,9 +101,9 @@ function ResponsiveGrid({
       width={lastValidGridSize}
       className={classes}
       isDraggable={true}
+      isResizable={true}
       // There is a bug with d3 + firefox + elements using transforms.
       // See https://github.com/elastic/kibana/issues/16870 for more context.
-      isResizable={true}
       useCSSTransforms={false}
       margin={[MARGINS, MARGINS]}
       cols={DASHBOARD_GRID_COLUMN_COUNT}
