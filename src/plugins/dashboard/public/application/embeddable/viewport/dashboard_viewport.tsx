@@ -47,6 +47,7 @@ import {
 import { useDirectQuery } from '../../../../../data_source_management/public';
 import { DirectQuerySyncService } from '../../utils/direct_query_sync/direct_query_sync_services';
 import { EMR_STATES } from '../../utils/direct_query_sync/direct_query_sync';
+import { DashboardDirectQuerySync } from '../grid/dashboard_direct_query_sync';
 
 export interface DashboardViewportProps {
   container: DashboardContainer;
@@ -216,15 +217,15 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
             logos={this.props.logos}
           />
         )}
-        <DashboardGrid
-          container={container}
-          PanelComponent={PanelComponent}
-          shouldRenderSyncUI={shouldRenderSyncUI}
-          loadStatus={this.props.loadStatus}
-          lastRefreshTime={extractedProps?.lastRefreshTime}
-          refreshInterval={extractedProps?.refreshInterval}
-          onSynchronize={this.syncService.synchronizeNow}
-        />
+        {shouldRenderSyncUI && (
+          <DashboardDirectQuerySync
+            loadStatus={this.props.loadStatus}
+            lastRefreshTime={extractedProps?.lastRefreshTime}
+            refreshInterval={extractedProps?.refreshInterval}
+            onSynchronize={this.syncService.synchronizeNow}
+          />
+        )}
+        <DashboardGrid container={container} PanelComponent={PanelComponent} />
       </div>
     );
   }

@@ -44,8 +44,6 @@ import {
 import { embeddablePluginMock } from '../../../../../embeddable/public/mocks';
 import { createDashboardServicesMock } from '../../utils/mocks';
 import { OpenSearchDashboardsContextProvider } from '../../../../../opensearch_dashboards_react/public';
-import { DashboardDirectQuerySyncProps } from './dashboard_direct_query_sync';
-import { DirectQueryLoadingStatus } from '../../../../../data_source_management/public';
 
 let dashboardContainer: DashboardContainer | undefined;
 
@@ -214,85 +212,4 @@ test('DashboardGrid unmount unsubscribes', (done) => {
     });
 
   props.container.updateInput({ expandedPanelId: '1' });
-});
-
-test('renders sync UI when shouldRenderSyncUI is true', () => {
-  const onSynchronizeMock = jest.fn();
-  const { props, options } = prepare({
-    shouldRenderSyncUI: true,
-    loadStatus: DirectQueryLoadingStatus.FRESH,
-    lastRefreshTime: 123456,
-    refreshInterval: 30000,
-    onSynchronize: onSynchronizeMock,
-  });
-
-  const component = mountWithIntl(
-    <OpenSearchDashboardsContextProvider services={options}>
-      <DashboardGrid {...props} />
-    </OpenSearchDashboardsContextProvider>
-  );
-
-  expect(component.find('DashboardDirectQuerySync').exists()).toBe(true);
-  const syncComponentProps = component
-    .find('DashboardDirectQuerySync')
-    .props() as DashboardDirectQuerySyncProps;
-  expect(syncComponentProps.loadStatus).toBe(DirectQueryLoadingStatus.FRESH);
-  expect(syncComponentProps.lastRefreshTime).toBe(123456);
-  expect(syncComponentProps.refreshInterval).toBe(30000);
-  expect(syncComponentProps.onSynchronize).toBe(onSynchronizeMock);
-});
-
-test('does not render sync UI when shouldRenderSyncUI is false', () => {
-  const { props, options } = prepare({
-    shouldRenderSyncUI: false,
-    loadStatus: DirectQueryLoadingStatus.FRESH,
-    lastRefreshTime: 123456,
-    refreshInterval: 30000,
-    onSynchronize: jest.fn(),
-  });
-
-  const component = mountWithIntl(
-    <OpenSearchDashboardsContextProvider services={options}>
-      <DashboardGrid {...props} />
-    </OpenSearchDashboardsContextProvider>
-  );
-
-  expect(component.find('DashboardDirectQuerySync').exists()).toBe(false);
-});
-
-test('does not render sync UI when shouldRenderSyncUI is undefined', () => {
-  const { props, options } = prepare();
-
-  const component = mountWithIntl(
-    <OpenSearchDashboardsContextProvider services={options}>
-      <DashboardGrid {...props} />
-    </OpenSearchDashboardsContextProvider>
-  );
-
-  expect(component.find('DashboardDirectQuerySync').exists()).toBe(false);
-});
-
-test('calls onSynchronize when sync button is clicked', () => {
-  const onSynchronizeMock = jest.fn();
-  const { props, options } = prepare({
-    shouldRenderSyncUI: true,
-    loadStatus: DirectQueryLoadingStatus.FRESH,
-    lastRefreshTime: 123456,
-    refreshInterval: 30000,
-    onSynchronize: onSynchronizeMock,
-  });
-
-  const component = mountWithIntl(
-    <OpenSearchDashboardsContextProvider services={options}>
-      <DashboardGrid {...props} />
-    </OpenSearchDashboardsContextProvider>
-  );
-
-  // Simulate clicking the "Sync data" link
-  component
-    .find('[data-test-subj="dashboardDirectQuerySyncBar"]')
-    .find('EuiLink')
-    .simulate('click');
-
-  expect(onSynchronizeMock).toHaveBeenCalled();
 });
