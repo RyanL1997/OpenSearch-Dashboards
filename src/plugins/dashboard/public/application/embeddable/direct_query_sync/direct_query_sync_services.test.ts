@@ -4,15 +4,12 @@
  */
 
 import { DirectQuerySyncService } from './direct_query_sync_services';
-import {
-  extractIndexInfoFromDashboard,
-  generateRefreshQuery,
-} from '../../utils/direct_query_sync/direct_query_sync';
-import { isDirectQuerySyncEnabledByUrl } from '../../utils/direct_query_sync/direct_query_sync_url_flag';
+import { extractIndexInfoFromDashboard, generateRefreshQuery } from './direct_query_sync';
+import { isDirectQuerySyncEnabledByUrl } from './direct_query_sync_url_flag';
 
 // Mock dependencies
-jest.mock('../../utils/direct_query_sync/direct_query_sync');
-jest.mock('../../utils/direct_query_sync/direct_query_sync_url_flag');
+jest.mock('./direct_query_sync');
+jest.mock('./direct_query_sync_url_flag');
 
 const mockRefreshQuery = 'REFRESH MATERIALIZED VIEW `datasource`.`database`.`index`';
 

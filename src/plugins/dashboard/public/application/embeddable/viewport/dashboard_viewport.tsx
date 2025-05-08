@@ -45,9 +45,9 @@ import {
   DirectQueryLoadingStatus,
 } from '../../../../../data_source_management/public';
 import { useDirectQuery } from '../../../../../data_source_management/public';
-import { DirectQuerySyncService } from '../../utils/direct_query_sync/direct_query_sync_services';
-import { EMR_STATES } from '../../utils/direct_query_sync/direct_query_sync';
-import { DashboardDirectQuerySync } from '../grid/dashboard_direct_query_sync';
+import { DirectQuerySyncService } from '../direct_query_sync/direct_query_sync_services';
+import { EMR_STATES } from '../direct_query_sync/direct_query_sync';
+import { DashboardDirectQuerySync } from '../direct_query_sync/dashboard_direct_query_sync';
 
 export interface DashboardViewportProps {
   container: DashboardContainer;
