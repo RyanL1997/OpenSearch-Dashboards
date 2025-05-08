@@ -202,24 +202,26 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
     const syncUIProps = this.syncService.getSyncUIProps();
 
     return (
-      <div
-        data-shared-items-count={Object.values(panels).length}
-        data-shared-items-container
-        data-title={title}
-        data-description={description}
-        className={useMargins ? 'dshDashboardViewport-withMargins' : 'dshDashboardViewport'}
-      >
-        {isFullScreenMode && (
-          <this.context.services.ExitFullScreenButton
-            onExitFullScreenMode={this.onExitFullScreenMode}
-            toggleChrome={!isEmbeddedExternally}
-            logos={this.props.logos}
-          />
-        )}
+      <div>
         {shouldRenderSyncUI && (
           <DashboardDirectQuerySync loadStatus={this.props.loadStatus} {...syncUIProps} />
         )}
-        <DashboardGrid container={container} PanelComponent={PanelComponent} />
+        <div
+          data-shared-items-count={Object.values(panels).length}
+          data-shared-items-container
+          data-title={title}
+          data-description={description}
+          className={useMargins ? 'dshDashboardViewport-withMargins' : 'dshDashboardViewport'}
+        >
+          {isFullScreenMode && (
+            <this.context.services.ExitFullScreenButton
+              onExitFullScreenMode={this.onExitFullScreenMode}
+              toggleChrome={!isEmbeddedExternally}
+              logos={this.props.logos}
+            />
+          )}
+          <DashboardGrid container={container} PanelComponent={PanelComponent} />
+        </div>
       </div>
     );
   }
