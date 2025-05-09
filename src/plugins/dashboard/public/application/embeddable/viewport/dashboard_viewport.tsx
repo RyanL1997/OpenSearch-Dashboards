@@ -30,39 +30,17 @@
 
 import React from 'react';
 import { Subscription } from 'rxjs';
-import {
-  Logos,
-  SavedObjectsClientContract,
-  HttpStart,
-  NotificationsStart,
-} from 'opensearch-dashboards/public';
+import { Logos } from 'opensearch-dashboards/public';
 import { PanelState, EmbeddableStart } from '../../../../../embeddable/public';
 import { DashboardContainer, DashboardReactContextValue } from '../dashboard_container';
 import { DashboardGrid } from '../grid';
 import { context } from '../../../../../opensearch_dashboards_react/public';
-import {
-  DirectQueryRequest,
-  DirectQueryLoadingStatus,
-} from '../../../../../data_source_management/public';
-import { useDirectQuery } from '../../../../../data_source_management/public';
-import { DirectQuerySyncService } from '../direct_query_sync/direct_query_sync_services';
-import { EMR_STATES } from '../direct_query_sync/direct_query_sync';
-import { DashboardDirectQuerySync } from '../direct_query_sync/dashboard_direct_query_sync';
 
 export interface DashboardViewportProps {
   container: DashboardContainer;
   PanelComponent: EmbeddableStart['EmbeddablePanel'];
   renderEmpty?: () => React.ReactNode;
   logos: Logos;
-  savedObjectsClient: SavedObjectsClientContract;
-  http: HttpStart;
-  notifications: NotificationsStart;
-  startLoading?: (payload: DirectQueryRequest) => void;
-  loadStatus?: DirectQueryLoadingStatus;
-  pollingResult?: any;
-  isDirectQuerySyncEnabled: boolean;
-  queryLang?: string;
-  setMdsId?: (mdsId?: string) => void;
 }
 
 interface State {
@@ -81,8 +59,6 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
   public readonly context!: DashboardReactContextValue;
   private subscription?: Subscription;
   private mounted: boolean = false;
-  private syncService: DirectQuerySyncService;
-
   constructor(props: DashboardViewportProps) {
     super(props);
     const {
@@ -102,31 +78,6 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
       isEmbeddedExternally,
       isEmptyState,
     };
-
-    // Initialize the DirectQuerySyncService
-    this.syncService = new DirectQuerySyncService({
-      savedObjectsClient: this.props.savedObjectsClient,
-      http: this.props.http,
-      startLoading: (payload: DirectQueryRequest) => {
-        // This will be set by DashboardViewportWithQuery
-        if (this.props.startLoading) {
-          this.props.startLoading(payload);
-        }
-      },
-      setMdsId: (mdsId?: string) => {
-        // This will be set by DashboardViewportWithQuery
-        if (this.props.setMdsId) {
-          this.props.setMdsId(mdsId);
-        }
-      },
-      isDirectQuerySyncEnabled: this.props.isDirectQuerySyncEnabled,
-      queryLang: this.props.queryLang,
-    });
-
-    // Initial metadata collection
-    if (this.syncService.isDirectQuerySyncEnabled()) {
-      this.syncService.collectAllPanelMetadata(panels);
-    }
   }
 
   public componentDidMount() {
@@ -139,7 +90,6 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
         description,
         isEmbeddedExternally,
         isEmptyState,
-        panels,
       } = this.props.container.getInput();
       if (this.mounted) {
         this.setState({
@@ -149,9 +99,7 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
           title,
           isEmbeddedExternally,
           isEmptyState,
-          panels,
         });
-        this.syncService.updatePanels(panels);
       }
     });
   }
@@ -161,7 +109,6 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
-    this.syncService.destroy();
   }
 
   public onExitFullScreenMode = () => {
@@ -197,47 +144,27 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
       description,
       useMargins,
     } = this.state;
-
-    const shouldRenderSyncUI = this.syncService.shouldRenderSyncUI();
-    const syncUIProps = this.syncService.getSyncUIProps();
-
     return (
-      <div>
-        {shouldRenderSyncUI && (
-          <DashboardDirectQuerySync loadStatus={this.props.loadStatus} {...syncUIProps} />
+      <div
+        data-shared-items-count={Object.values(panels).length}
+        data-shared-items-container
+        data-title={title}
+        data-description={description}
+        className={useMargins ? 'dshDashboardViewport-withMargins' : 'dshDashboardViewport'}
+      >
+        {isFullScreenMode && (
+          <this.context.services.ExitFullScreenButton
+            onExitFullScreenMode={this.onExitFullScreenMode}
+            toggleChrome={!isEmbeddedExternally}
+            logos={this.props.logos}
+          />
         )}
-        <div
-          data-shared-items-count={Object.values(panels).length}
-          data-shared-items-container
-          data-title={title}
-          data-description={description}
-          className={useMargins ? 'dshDashboardViewport-withMargins' : 'dshDashboardViewport'}
-        >
-          {isFullScreenMode && (
-            <this.context.services.ExitFullScreenButton
-              onExitFullScreenMode={this.onExitFullScreenMode}
-              toggleChrome={!isEmbeddedExternally}
-              logos={this.props.logos}
-            />
-          )}
-          <DashboardGrid container={container} PanelComponent={PanelComponent} />
-        </div>
+        <DashboardGrid container={container} PanelComponent={PanelComponent} />
       </div>
     );
   }
 
   public render() {
-    const emrState = EMR_STATES.get(this.props.loadStatus as string);
-
-    if (
-      emrState?.terminal &&
-      this.props.loadStatus !== DirectQueryLoadingStatus.FRESH &&
-      this.props.loadStatus !== DirectQueryLoadingStatus.FAILED &&
-      this.props.loadStatus !== DirectQueryLoadingStatus.CANCELLED
-    ) {
-      window.location.reload();
-    }
-
     return (
       <React.Fragment>
         {this.state.isEmptyState ? this.renderEmptyScreen() : null}
@@ -246,29 +173,3 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
     );
   }
 }
-
-/**
- * A wrapper component for DashboardViewport that integrates direct query sync functionality.
- * Manages the state for direct query sync (startLoading, loadStatus, pollingResult) using the useDirectQuery hook,
- * and provides mdsId state management for datasource synchronization.
- * This separation keeps DashboardViewport as a pure presentational component while handling stateful logic here.
- */
-export const DashboardViewportWithQuery = (
-  props: Omit<DashboardViewportProps, 'startLoading' | 'loadStatus' | 'pollingResult'>
-) => {
-  const [mdsId, setMdsId] = React.useState<string | undefined>(undefined);
-  const { http, notifications, ...restProps } = props;
-  const { startLoading, loadStatus, pollingResult } = useDirectQuery(http, notifications, mdsId);
-
-  return (
-    <DashboardViewport
-      {...restProps}
-      http={http}
-      notifications={notifications}
-      startLoading={startLoading}
-      loadStatus={loadStatus}
-      pollingResult={pollingResult}
-      setMdsId={setMdsId}
-    />
-  );
-};

@@ -15,6 +15,7 @@ export interface DashboardDirectQuerySyncProps {
   lastRefreshTime?: number;
   refreshInterval?: number;
   onSynchronize: () => void;
+  className?: string;
 }
 
 export const DashboardDirectQuerySync: React.FC<DashboardDirectQuerySyncProps> = ({
@@ -22,44 +23,60 @@ export const DashboardDirectQuerySync: React.FC<DashboardDirectQuerySyncProps> =
   lastRefreshTime,
   refreshInterval,
   onSynchronize,
+  className,
 }) => {
+  console.log('DashboardDirectQuerySync: Rendering with props:', {
+    loadStatus,
+    lastRefreshTime,
+    refreshInterval,
+    className,
+    onSynchronize: '[Function]', // Simplified since onSynchronize is guaranteed to be a function
+  });
+
   // If loadStatus is undefined, default to a non-terminal state to avoid errors
   const state = loadStatus ? EMR_STATES.get(loadStatus)! : { ord: 0, terminal: false };
+  console.log('DashboardDirectQuerySync: Computed state=', state);
 
   return (
-    <div className="dshDashboardGrid__syncBar" data-test-subj="dashboardDirectQuerySyncBar">
+    <div className={className} data-test-subj="dashboardDirectQuerySyncBar">
       {state.terminal ? (
-        <EuiText size="s">
-          {i18n.translate('dashboard.directQuerySync.dataScheduledToSync', {
-            defaultMessage: 'Data scheduled to sync every {interval}. Last sync: {lastSyncTime}.',
-            values: {
-              interval: refreshInterval ? intervalAsMinutes(1000 * refreshInterval) : '--',
-              lastSyncTime: lastRefreshTime
-                ? `${new Date(lastRefreshTime).toLocaleString()} (${intervalAsMinutes(
-                    new Date().getTime() - lastRefreshTime
-                  )} ago)`
-                : '--',
-            },
-          })}
-
-          <EuiLink onClick={onSynchronize}>
-            {i18n.translate('dashboard.directQuerySync.syncDataLink', {
-              defaultMessage: 'Sync data',
+        <>
+          {console.log('DashboardDirectQuerySync: Rendering terminal state UI')}
+          <EuiText size="s">
+            {i18n.translate('dashboard.directQuerySync.dataScheduledToSync', {
+              defaultMessage: 'Data scheduled to sync every {interval}. Last sync: {lastSyncTime}.',
+              values: {
+                interval: refreshInterval ? intervalAsMinutes(1000 * refreshInterval) : '--',
+                lastSyncTime: lastRefreshTime
+                  ? `${new Date(lastRefreshTime).toLocaleString()} (${intervalAsMinutes(
+                      new Date().getTime() - lastRefreshTime
+                    )} ago)`
+                  : '--',
+              },
             })}
-          </EuiLink>
-        </EuiText>
-      ) : (
-        <EuiCallOut size="s">
-          <EuiLoadingSpinner size="s" />
 
-          {i18n.translate('dashboard.directQuerySync.dataSyncInProgress', {
-            defaultMessage:
-              'Data sync is in progress ({progress}% complete). The dashboard will reload on completion.',
-            values: {
-              progress: state.ord,
-            },
-          })}
-        </EuiCallOut>
+            <EuiLink onClick={onSynchronize}>
+              {i18n.translate('dashboard.directQuerySync.syncDataLink', {
+                defaultMessage: 'Sync data',
+              })}
+            </EuiLink>
+          </EuiText>
+        </>
+      ) : (
+        <>
+          {console.log('DashboardDirectQuerySync: Rendering in-progress state UI')}
+          <EuiCallOut size="s">
+            <EuiLoadingSpinner size="s" />
+
+            {i18n.translate('dashboard.directQuerySync.dataSyncInProgress', {
+              defaultMessage:
+                'Data sync is in progress ({progress}% complete). The dashboard will reload on completion.',
+              values: {
+                progress: state.ord,
+              },
+            })}
+          </EuiCallOut>
+        </>
       )}
     </div>
   );
