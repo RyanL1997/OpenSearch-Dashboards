@@ -19,7 +19,6 @@ import {
 
 import { PLUGIN_NAME } from '../common';
 import { createDataSourceSelector } from './components/data_source_selector/create_data_source_selector';
-
 import { ManagementSetup } from '../../management/public';
 import { IndexPatternManagementSetup } from '../../index_pattern_management/public';
 import { DataSourceColumn } from './components/data_source_column/data_source_column';
@@ -53,6 +52,8 @@ import { AccelerationDetailsFlyout } from './components/direct_query_data_source
 import { CreateAcceleration } from './components/direct_query_data_sources_components/acceleration_creation/create/create_acceleration';
 import { AssociatedObjectsDetailsFlyout } from './components/direct_query_data_sources_components/associated_object_management/associated_objects_details_flyout';
 import { getScopedBreadcrumbs } from '../../opensearch_dashboards_react/public';
+import { DirectQuerySyncEmbeddableFactoryDefinition } from './embeddable/direct_query_sync_embeddable_factory';
+import { DIRECT_QUERY_SYNC_EMBEDDABLE_TYPE } from './embeddable/direct_query_sync_embeddable';
 
 export const [
   getRenderAccelerationDetailsFlyout,
@@ -67,6 +68,7 @@ export const [
 ] = createGetterSetter<(params: RenderAccelerationFlyoutParams) => void>(
   'renderCreateAccelerationFlyout'
 );
+
 export const [
   getRenderAssociatedObjectsDetailsFlyout,
   setRenderAssociatedObjectsDetailsFlyout,
@@ -74,16 +76,17 @@ export const [
   'renderAssociatedObjectsDetailsFlyout'
 );
 
+// Add embeddable to setup dependencies
 export interface DataSourceManagementSetupDependencies {
   management: ManagementSetup;
   indexPatternManagement: IndexPatternManagementSetup;
   dataSource?: DataSourcePluginSetup;
-  embeddable: EmbeddableSetup;
+  embeddable: EmbeddableSetup; // Add embeddable dependency
 }
 
 // Add embeddable to start dependencies
 export interface DataSourceManagementStartDependencies {
-  embeddable: EmbeddableStart;
+  embeddable: EmbeddableStart; // Add embeddable dependency
 }
 
 export interface DataSourceManagementPluginSetup {
@@ -127,10 +130,9 @@ export class DataSourceManagementPlugin
       embeddable,
     }: DataSourceManagementSetupDependencies
   ) {
-    // Debug embeddable setup service to confirm it's available
-    console.log(
-      `[DataSourceManagement] [${new Date().toISOString()}] Embeddable setup service available:`,
-      embeddable
+    embeddable.registerEmbeddableFactory(
+      DIRECT_QUERY_SYNC_EMBEDDABLE_TYPE,
+      new DirectQuerySyncEmbeddableFactoryDefinition()
     );
 
     const opensearchDashboardsSection = management.sections.section.opensearchDashboards;
@@ -249,27 +251,6 @@ export class DataSourceManagementPlugin
     core.http.intercept({
       request: catalogRequestIntercept(),
     });
-
-    // Debug coreStart properties with timestamp to see what's available
-    console.log(
-      `[DataSourceManagement] [${new Date().toISOString()}] coreStart properties:`,
-      Object.keys(core)
-    );
-    // Verify access to the embeddable framework
-    console.log(
-      `[DataSourceManagement] [${new Date().toISOString()}] Embeddable framework available:`,
-      embeddable
-    );
-    if (!embeddable) {
-      console.error(
-        `[DataSourceManagement] [${new Date().toISOString()}] Error: Embeddable framework is not available`
-      );
-    } else {
-      console.log(
-        `[DataSourceManagement] [${new Date().toISOString()}] Embeddable framework methods:`,
-        Object.keys(embeddable)
-      );
-    }
 
     const renderAccelerationDetailsFlyout = ({
       acceleration,

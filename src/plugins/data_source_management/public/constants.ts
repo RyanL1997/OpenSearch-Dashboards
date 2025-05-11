@@ -29,3 +29,5 @@ export const EDIT = '/edit';
 export const DATACONNECTIONS_UPDATE_STATUS = '/status';
 export const INTEGRATIONS_BASE = '/api/integrations';
 export const observabilityMetricsID = 'observability-metrics';
+
+export const DIRECT_QUERY_SAVED_OBJECT = 'direct-query-visualization';
