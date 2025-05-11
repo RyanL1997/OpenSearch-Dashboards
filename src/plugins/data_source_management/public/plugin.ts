@@ -6,6 +6,7 @@
 import React from 'react';
 import { i18n } from '@osd/i18n';
 import { DataSourcePluginSetup } from 'src/plugins/data_source/public';
+import { EmbeddableSetup, EmbeddableStart } from 'src/plugins/embeddable/public';
 import {
   AppMountParameters,
   CoreSetup,
@@ -77,6 +78,12 @@ export interface DataSourceManagementSetupDependencies {
   management: ManagementSetup;
   indexPatternManagement: IndexPatternManagementSetup;
   dataSource?: DataSourcePluginSetup;
+  embeddable: EmbeddableSetup;
+}
+
+// Add embeddable to start dependencies
+export interface DataSourceManagementStartDependencies {
+  embeddable: EmbeddableStart;
 }
 
 export interface DataSourceManagementPluginSetup {
@@ -104,16 +111,28 @@ export class DataSourceManagementPlugin
     Plugin<
       DataSourceManagementPluginSetup,
       DataSourceManagementPluginStart,
-      DataSourceManagementSetupDependencies
+      DataSourceManagementSetupDependencies,
+      DataSourceManagementStartDependencies
     > {
   private started = false;
   private authMethodsRegistry = new AuthenticationMethodRegistry();
   private dataSourceSelection = new DataSourceSelectionService();
   private featureFlagStatus: boolean = false;
   public setup(
-    core: CoreSetup<DataSourceManagementPluginStart>,
-    { management, indexPatternManagement, dataSource }: DataSourceManagementSetupDependencies
+    core: CoreSetup<DataSourceManagementPluginStart, DataSourceManagementStartDependencies>,
+    {
+      management,
+      indexPatternManagement,
+      dataSource,
+      embeddable,
+    }: DataSourceManagementSetupDependencies
   ) {
+    // Debug embeddable setup service to confirm it's available
+    console.log(
+      `[DataSourceManagement] [${new Date().toISOString()}] Embeddable setup service available:`,
+      embeddable
+    );
+
     const opensearchDashboardsSection = management.sections.section.opensearchDashboards;
     const uiSettings = core.uiSettings;
     setUiSettings(uiSettings);
@@ -224,12 +243,33 @@ export class DataSourceManagementPlugin
     };
   }
 
-  public start(core: CoreStart) {
+  public start(core: CoreStart, { embeddable }: DataSourceManagementStartDependencies) {
     this.started = true;
     setApplication(core.application);
     core.http.intercept({
       request: catalogRequestIntercept(),
     });
+
+    // Debug coreStart properties with timestamp to see what's available
+    console.log(
+      `[DataSourceManagement] [${new Date().toISOString()}] coreStart properties:`,
+      Object.keys(core)
+    );
+    // Verify access to the embeddable framework
+    console.log(
+      `[DataSourceManagement] [${new Date().toISOString()}] Embeddable framework available:`,
+      embeddable
+    );
+    if (!embeddable) {
+      console.error(
+        `[DataSourceManagement] [${new Date().toISOString()}] Error: Embeddable framework is not available`
+      );
+    } else {
+      console.log(
+        `[DataSourceManagement] [${new Date().toISOString()}] Embeddable framework methods:`,
+        Object.keys(embeddable)
+      );
+    }
 
     const renderAccelerationDetailsFlyout = ({
       acceleration,
