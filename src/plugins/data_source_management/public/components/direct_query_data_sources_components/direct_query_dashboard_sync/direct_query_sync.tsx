@@ -16,6 +16,7 @@ export interface DashboardDirectQuerySyncProps {
   refreshInterval?: number;
   onSynchronize: () => void;
   className?: string;
+  isSyncEnabled?: boolean; // Added to control sync button state
 }
 
 export const DashboardDirectQuerySync: React.FC<DashboardDirectQuerySyncProps> = ({
@@ -24,6 +25,7 @@ export const DashboardDirectQuerySync: React.FC<DashboardDirectQuerySyncProps> =
   refreshInterval,
   onSynchronize,
   className,
+  isSyncEnabled = true, // Default to enabled if not provided
 }) => {
   console.log('DashboardDirectQuerySync: Rendering with props:', {
     loadStatus,
@@ -31,6 +33,7 @@ export const DashboardDirectQuerySync: React.FC<DashboardDirectQuerySyncProps> =
     refreshInterval,
     className,
     onSynchronize: '[Function]',
+    isSyncEnabled,
   });
 
   // If loadStatus is undefined, default to a non-terminal state to avoid errors
@@ -55,7 +58,7 @@ export const DashboardDirectQuerySync: React.FC<DashboardDirectQuerySyncProps> =
               },
             })}
 
-            <EuiLink onClick={onSynchronize}>
+            <EuiLink onClick={onSynchronize} disabled={!isSyncEnabled}>
               {i18n.translate('dataSourcesManagement.directQuerySync.syncDataLink', {
                 defaultMessage: 'Sync data',
               })}
