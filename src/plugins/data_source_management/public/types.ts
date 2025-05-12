@@ -18,14 +18,7 @@ import { ManagementAppMountParams } from 'src/plugins/management/public';
 import { i18n } from '@osd/i18n';
 import { EuiComboBoxOptionOption } from '@elastic/eui';
 import { NavigationPublicPluginStart } from 'src/plugins/navigation/public';
-import {
-  Embeddable, // Will be used in Stage 2/3 for DummyEmbeddable and DirectQuerySyncEmbeddable
-  EmbeddableFactoryDefinition, // Will be used in Stage 2/3 for DummyEmbeddableFactory and DirectQuerySyncEmbeddableFactory
-  EmbeddableOutput,
-  IContainer, // Will be used in Stage 2/3 for parent container in embeddable factories
-  EmbeddableInput, // Used for DirectQuerySyncInput
-} from 'src/plugins/embeddable/public';
-import { TimeRange, Filter, Query } from 'src/plugins/data/public';
+import { EmbeddableOutput } from 'src/plugins/embeddable/public';
 import { AuthType } from '../../data_source/common/data_sources';
 import { SigV4ServiceName } from '../../data_source/common/data_sources';
 import { OpenSearchDashboardsReactContextValue } from '../../opensearch_dashboards_react/public';
@@ -212,10 +205,8 @@ export interface PermissionsConfigurationProps {
 }
 
 // Types for Direct Query Sync Embeddable Panel
-export interface DirectQuerySyncInput extends EmbeddableInput {
-  timeRange?: TimeRange;
-  filters?: Filter[];
-  query?: Query;
+export interface DirectQuerySyncInput {
+  id: string;
 }
 
 export interface DirectQuerySyncOutput extends EmbeddableOutput {

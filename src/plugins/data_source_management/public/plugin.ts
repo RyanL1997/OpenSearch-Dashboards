@@ -130,11 +130,6 @@ export class DataSourceManagementPlugin
       embeddable,
     }: DataSourceManagementSetupDependencies
   ) {
-    embeddable.registerEmbeddableFactory(
-      DIRECT_QUERY_SYNC_EMBEDDABLE_TYPE,
-      new DirectQuerySyncEmbeddableFactoryDefinition()
-    );
-
     const opensearchDashboardsSection = management.sections.section.opensearchDashboards;
     const uiSettings = core.uiSettings;
     setUiSettings(uiSettings);
@@ -204,7 +199,19 @@ export class DataSourceManagementPlugin
       },
     ]);
 
-    // when the feature flag is disabled, we don't need to register any of the mds components
+    // Register the embeddable factory with dependencies
+    core.getStartServices().then(([coreStart]) => {
+      embeddable.registerEmbeddableFactory(
+        DIRECT_QUERY_SYNC_EMBEDDABLE_TYPE,
+        new DirectQuerySyncEmbeddableFactoryDefinition({
+          http: coreStart.http,
+          notifications: coreStart.notifications,
+          savedObjectsClient: coreStart.savedObjects.client,
+        })
+      );
+    });
+
+    // When the feature flag is disabled, we don't need to register any of the mds components
     if (!this.featureFlagStatus) {
       return undefined;
     }

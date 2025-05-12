@@ -7,8 +7,8 @@ import React from 'react';
 import { EuiCallOut, EuiLink, EuiLoadingSpinner, EuiText } from '@elastic/eui';
 import { i18n } from '@osd/i18n';
 import { DirectQueryLoadingStatus } from '../../../../framework/types';
+import { EMR_STATES } from '../../../constants';
 import { intervalAsMinutes } from '../../utils';
-// import './_dashboard_direct_query_sync.scss';
 
 export interface DashboardDirectQuerySyncProps {
   loadStatus?: DirectQueryLoadingStatus;
@@ -16,8 +16,6 @@ export interface DashboardDirectQuerySyncProps {
   refreshInterval?: number;
   onSynchronize: () => void;
   className?: string;
-  // Add EMR_STATES as a prop
-  EMR_STATES: Map<DirectQueryLoadingStatus, { ord: number; terminal: boolean }>;
 }
 
 export const DashboardDirectQuerySync: React.FC<DashboardDirectQuerySyncProps> = ({
@@ -26,7 +24,6 @@ export const DashboardDirectQuerySync: React.FC<DashboardDirectQuerySyncProps> =
   refreshInterval,
   onSynchronize,
   className,
-  EMR_STATES, // Use the prop instead of the imported constant
 }) => {
   console.log('DashboardDirectQuerySync: Rendering with props:', {
     loadStatus,

@@ -4,6 +4,11 @@
  */
 
 import {
+  HttpStart,
+  NotificationsStart,
+  SavedObjectsClientContract,
+} from 'opensearch-dashboards/public';
+import {
   IContainer,
   EmbeddableFactoryDefinition,
   EmbeddableFactory,
@@ -11,8 +16,14 @@ import {
 import {
   DIRECT_QUERY_SYNC_EMBEDDABLE_TYPE,
   DirectQuerySyncEmbeddable,
-  DirectQuerySyncInput,
 } from './direct_query_sync_embeddable';
+import { DirectQuerySyncInput } from '../types';
+
+interface DirectQuerySyncEmbeddableFactoryDeps {
+  http: HttpStart;
+  notifications: NotificationsStart;
+  savedObjectsClient: SavedObjectsClientContract;
+}
 
 /**
  * Factory for creating DirectQuerySyncEmbeddable instances.
@@ -20,6 +31,16 @@ import {
 export class DirectQuerySyncEmbeddableFactoryDefinition
   implements EmbeddableFactoryDefinition<DirectQuerySyncInput> {
   public readonly type = DIRECT_QUERY_SYNC_EMBEDDABLE_TYPE;
+
+  private readonly http: HttpStart;
+  private readonly notifications: NotificationsStart;
+  private readonly savedObjectsClient: SavedObjectsClientContract;
+
+  constructor(deps: DirectQuerySyncEmbeddableFactoryDeps) {
+    this.http = deps.http;
+    this.notifications = deps.notifications;
+    this.savedObjectsClient = deps.savedObjectsClient;
+  }
 
   /**
    * Determines if the embeddable is editable.
@@ -32,7 +53,13 @@ export class DirectQuerySyncEmbeddableFactoryDefinition
    * Creates a new instance of DirectQuerySyncEmbeddable.
    */
   public async create(initialInput: DirectQuerySyncInput, parent?: IContainer) {
-    return new DirectQuerySyncEmbeddable(initialInput, parent);
+    return new DirectQuerySyncEmbeddable(
+      initialInput,
+      parent,
+      this.http,
+      this.notifications,
+      this.savedObjectsClient
+    );
   }
 
   /**

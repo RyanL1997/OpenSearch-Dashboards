@@ -7,15 +7,15 @@ import React from 'react';
 import { DashboardDirectQuerySync } from '../components/direct_query_data_sources_components/direct_query_dashboard_sync/direct_query_sync';
 import { DirectQuerySyncEmbeddable } from './direct_query_sync_embeddable';
 import { DirectQueryLoadingStatus } from '../../framework/types';
+import { EMR_STATES } from '../constants';
 import { intervalAsMinutes } from '../components/utils';
-
-// Mock EMR_STATES (to be replaced with the real implementation in the next step)
-const mockEMRStates = new Map<DirectQueryLoadingStatus, { ord: number; terminal: boolean }>([
-  [DirectQueryLoadingStatus.SUCCESS, { ord: 100, terminal: true }],
-]);
 
 interface DirectQuerySyncEmbeddableComponentProps {
   embeddable: DirectQuerySyncEmbeddable;
+  loadStatus?: string;
+  lastRefreshTime?: number;
+  refreshInterval?: number;
+  onSynchronize?: () => void;
 }
 
 /**
@@ -23,20 +23,29 @@ interface DirectQuerySyncEmbeddableComponentProps {
  */
 export const DirectQuerySyncEmbeddableComponent: React.FC<DirectQuerySyncEmbeddableComponentProps> = ({
   embeddable,
+  loadStatus,
+  lastRefreshTime,
+  refreshInterval,
+  onSynchronize,
 }) => {
-  // Mock props for DashboardDirectQuerySync
-  const mockProps = {
-    loadStatus: DirectQueryLoadingStatus.SUCCESS,
-    lastRefreshTime: Date.now() - 2 * 60 * 1000, // Mock as 2 minutes ago
-    refreshInterval: 300, // Mock as 5 minutes (300 seconds)
-    onSynchronize: () => console.log('Manual sync triggered'),
-    className: 'dashboardDirectQuerySyncBar', // Use the same className as the original component
-    EMR_STATES: mockEMRStates, // Pass the mocked EMR_STATES as a prop
+  const effectiveLoadStatus =
+    loadStatus ?? embeddable.getLoadStatus() ?? DirectQueryLoadingStatus.FRESH; // Default to SCHEDULED if undefined
+  const effectiveLastRefreshTime = lastRefreshTime ?? embeddable.getLastRefreshTime(); // Use mapping value, may be undefined
+  const effectiveRefreshInterval = refreshInterval ?? embeddable.getRefreshInterval(); // Use mapping value, may be undefined
+  const effectiveOnSynchronize = onSynchronize ?? embeddable.synchronizeNow.bind(embeddable); // Bind the synchronizeNow method
+
+  const props = {
+    loadStatus: effectiveLoadStatus,
+    lastRefreshTime: effectiveLastRefreshTime,
+    refreshInterval: effectiveRefreshInterval,
+    onSynchronize: effectiveOnSynchronize,
+    className: 'dashboardDirectQuerySyncBar',
+    EMR_STATES,
   };
 
   return (
     <div>
-      <DashboardDirectQuerySync {...mockProps} />
+      <DashboardDirectQuerySync {...props} />
     </div>
   );
 };
