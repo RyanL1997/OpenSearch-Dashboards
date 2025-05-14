@@ -6,6 +6,7 @@
 import React from 'react';
 import { i18n } from '@osd/i18n';
 import { DataSourcePluginSetup } from 'src/plugins/data_source/public';
+import { EmbeddableSetup, EmbeddableStart } from 'src/plugins/embeddable/public';
 import {
   AppMountParameters,
   CoreSetup,
@@ -18,7 +19,6 @@ import {
 
 import { PLUGIN_NAME } from '../common';
 import { createDataSourceSelector } from './components/data_source_selector/create_data_source_selector';
-
 import { ManagementSetup } from '../../management/public';
 import { IndexPatternManagementSetup } from '../../index_pattern_management/public';
 import { DataSourceColumn } from './components/data_source_column/data_source_column';
@@ -52,6 +52,8 @@ import { AccelerationDetailsFlyout } from './components/direct_query_data_source
 import { CreateAcceleration } from './components/direct_query_data_sources_components/acceleration_creation/create/create_acceleration';
 import { AssociatedObjectsDetailsFlyout } from './components/direct_query_data_sources_components/associated_object_management/associated_objects_details_flyout';
 import { getScopedBreadcrumbs } from '../../opensearch_dashboards_react/public';
+import { DirectQuerySyncEmbeddableFactoryDefinition } from './embeddable/direct_query_sync_embeddable_factory';
+import { DIRECT_QUERY_SYNC_EMBEDDABLE_TYPE } from './embeddable/direct_query_sync_embeddable';
 
 export const [
   getRenderAccelerationDetailsFlyout,
@@ -66,6 +68,7 @@ export const [
 ] = createGetterSetter<(params: RenderAccelerationFlyoutParams) => void>(
   'renderCreateAccelerationFlyout'
 );
+
 export const [
   getRenderAssociatedObjectsDetailsFlyout,
   setRenderAssociatedObjectsDetailsFlyout,
@@ -73,10 +76,17 @@ export const [
   'renderAssociatedObjectsDetailsFlyout'
 );
 
+// Add embeddable to setup dependencies
 export interface DataSourceManagementSetupDependencies {
   management: ManagementSetup;
   indexPatternManagement: IndexPatternManagementSetup;
   dataSource?: DataSourcePluginSetup;
+  embeddable: EmbeddableSetup; // Add embeddable dependency
+}
+
+// Add embeddable to start dependencies
+export interface DataSourceManagementStartDependencies {
+  embeddable: EmbeddableStart; // Add embeddable dependency
 }
 
 export interface DataSourceManagementPluginSetup {
@@ -104,15 +114,21 @@ export class DataSourceManagementPlugin
     Plugin<
       DataSourceManagementPluginSetup,
       DataSourceManagementPluginStart,
-      DataSourceManagementSetupDependencies
+      DataSourceManagementSetupDependencies,
+      DataSourceManagementStartDependencies
     > {
   private started = false;
   private authMethodsRegistry = new AuthenticationMethodRegistry();
   private dataSourceSelection = new DataSourceSelectionService();
   private featureFlagStatus: boolean = false;
   public setup(
-    core: CoreSetup<DataSourceManagementPluginStart>,
-    { management, indexPatternManagement, dataSource }: DataSourceManagementSetupDependencies
+    core: CoreSetup<DataSourceManagementPluginStart, DataSourceManagementStartDependencies>,
+    {
+      management,
+      indexPatternManagement,
+      dataSource,
+      embeddable,
+    }: DataSourceManagementSetupDependencies
   ) {
     const opensearchDashboardsSection = management.sections.section.opensearchDashboards;
     const uiSettings = core.uiSettings;
@@ -183,7 +199,19 @@ export class DataSourceManagementPlugin
       },
     ]);
 
-    // when the feature flag is disabled, we don't need to register any of the mds components
+    // Register the embeddable factory with dependencies
+    core.getStartServices().then(([coreStart]) => {
+      embeddable.registerEmbeddableFactory(
+        DIRECT_QUERY_SYNC_EMBEDDABLE_TYPE,
+        new DirectQuerySyncEmbeddableFactoryDefinition({
+          http: coreStart.http,
+          notifications: coreStart.notifications,
+          savedObjectsClient: coreStart.savedObjects.client,
+        })
+      );
+    });
+
+    // When the feature flag is disabled, we don't need to register any of the mds components
     if (!this.featureFlagStatus) {
       return undefined;
     }
@@ -224,7 +252,7 @@ export class DataSourceManagementPlugin
     };
   }
 
-  public start(core: CoreStart) {
+  public start(core: CoreStart, { embeddable }: DataSourceManagementStartDependencies) {
     this.started = true;
     setApplication(core.application);
     core.http.intercept({
