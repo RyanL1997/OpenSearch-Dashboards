@@ -15,6 +15,8 @@ import {
   MountPoint,
   Plugin,
 } from '../../../core/public';
+import { toMountPoint } from '../../../../src/plugins/opensearch_dashboards_react/public';
+import { DashboardDirectQuerySync } from './components/direct_query_data_sources_components/direct_query_sync/direct_query_sync';
 
 import { PLUGIN_NAME } from '../common';
 import { createDataSourceSelector } from './components/data_source_selector/create_data_source_selector';
@@ -42,7 +44,6 @@ import {
 import { DataSourceSelectionService } from './service/data_source_selection_service';
 import { catalogRequestIntercept } from '../framework/catalog_cache/cache_intercept';
 import { createGetterSetter } from '../../../../src/plugins/opensearch_dashboards_utils/public';
-import { toMountPoint } from '../../../../src/plugins/opensearch_dashboards_react/public';
 import {
   RenderAccelerationDetailsFlyoutParams,
   RenderAccelerationFlyoutParams,
@@ -106,14 +107,18 @@ export class DataSourceManagementPlugin
       DataSourceManagementPluginStart,
       DataSourceManagementSetupDependencies
     > {
-  private started = false;
-  private authMethodsRegistry = new AuthenticationMethodRegistry();
-  private dataSourceSelection = new DataSourceSelectionService();
+  private started: boolean = false;
+  private authMethodsRegistry: IAuthenticationMethodRegistry = new AuthenticationMethodRegistry();
+  private dataSourceSelection: DataSourceSelectionService = new DataSourceSelectionService();
   private featureFlagStatus: boolean = false;
+  private bannerId: string | null = null; // To store the banner ID for unmounting
+  private core: CoreStart | null = null; // To store the CoreStart instance
+  private currentAppId: string | undefined = undefined; // To store the current appId
+
   public setup(
     core: CoreSetup<DataSourceManagementPluginStart>,
     { management, indexPatternManagement, dataSource }: DataSourceManagementSetupDependencies
-  ) {
+  ): DataSourceManagementPluginSetup {
     const opensearchDashboardsSection = management.sections.section.opensearchDashboards;
     const uiSettings = core.uiSettings;
     setUiSettings(uiSettings);
@@ -135,7 +140,7 @@ export class DataSourceManagementPlugin
       id: DSM_APP_ID,
       title: PLUGIN_NAME,
       order: 1,
-      mount: async (params) => {
+      mount: async (params: AppMountParameters) => {
         const { mountManagementSection } = await import('./management_app');
 
         return mountManagementSection(
@@ -185,7 +190,7 @@ export class DataSourceManagementPlugin
 
     // when the feature flag is disabled, we don't need to register any of the mds components
     if (!this.featureFlagStatus) {
-      return undefined;
+      return undefined as any;
     }
 
     const registerAuthenticationMethod = (authMethod: AuthenticationMethod) => {
@@ -217,15 +222,18 @@ export class DataSourceManagementPlugin
       dataSourceSelection: this.dataSourceSelection,
       ui: {
         DataSourceSelector: createDataSourceSelector(uiSettings, dataSource!),
-        getDataSourceMenu: <T>() => createDataSourceMenu<T>(),
+        getDataSourceMenu: <T>(): React.ComponentType<DataSourceMenuProps<T>> =>
+          createDataSourceMenu<T>(),
       },
       getDefaultDataSourceId,
       getDefaultDataSourceId$,
     };
   }
 
-  public start(core: CoreStart) {
+  public start(core: CoreStart): DataSourceManagementPluginStart {
     this.started = true;
+    this.core = core;
+
     setApplication(core.application);
     core.http.intercept({
       request: catalogRequestIntercept(),
@@ -240,7 +248,7 @@ export class DataSourceManagementPlugin
       const accelerationDetailsFlyout = core.overlays.openFlyout(
         toMountPoint(
           React.createElement(AccelerationDetailsFlyout, {
-            featureFlagStatus: this.featureFlagStatus, // Use the stored featureFlagStatus
+            featureFlagStatus: this.featureFlagStatus,
             acceleration,
             dataSourceName,
             resetFlyout: () => accelerationDetailsFlyout.close(),
@@ -303,10 +311,91 @@ export class DataSourceManagementPlugin
     };
     setRenderAssociatedObjectsDetailsFlyout(renderAssociatedObjectsDetailsFlyout);
 
+    // Dynamically add/remove the banner based on the route
+    core.application.currentAppId$.subscribe((appId: string | undefined) => {
+      // Store the current appId
+      this.currentAppId = appId;
+
+      // Show the banner only in the Dashboard application on the view route
+      if (appId === 'dashboards') {
+        const hash = window.location.hash;
+        const isDashboardViewMatch = hash.match(/#\/view\/([^\/?]+)(\?.*)?$/);
+        if (isDashboardViewMatch && isDashboardViewMatch[1]) {
+          const dashboardId = isDashboardViewMatch[1];
+          // Mount the banner if it hasn't been mounted yet
+          if (!this.bannerId) {
+            this.bannerId = core.overlays.banners.add(
+              toMountPoint(
+                React.createElement(DashboardDirectQuerySync, {
+                  dashboardId,
+                  http: core.http,
+                  savedObjectsClient: core.savedObjects.client, // Pass savedObjectsClient
+                  removeBanner: () => {
+                    if (this.bannerId) {
+                      core.overlays.banners.remove(this.bannerId);
+                      this.bannerId = null;
+                    }
+                  },
+                })
+              )
+            );
+          }
+        } else if (!isDashboardViewMatch && this.bannerId) {
+          // Remove the banner if we're not on a dashboard view page
+          core.overlays.banners.remove(this.bannerId);
+          this.bannerId = null;
+        }
+      } else {
+        // Remove the banner when not in the Dashboard application
+        if (this.bannerId) {
+          core.overlays.banners.remove(this.bannerId);
+          this.bannerId = null;
+        }
+      }
+    });
+
+    // Listen for hash changes to handle in-app navigation
+    window.addEventListener('hashchange', () => {
+      const appId = this.currentAppId; // Use the stored appId
+      const hash = window.location.hash;
+      const isDashboardViewMatch = hash.match(/#\/view\/([^\/?]+)(\?.*)?$/);
+      if (appId === 'dashboards') {
+        if (isDashboardViewMatch && isDashboardViewMatch[1]) {
+          const dashboardId = isDashboardViewMatch[1];
+          if (!this.bannerId) {
+            this.bannerId = core.overlays.banners.add(
+              toMountPoint(
+                React.createElement(DashboardDirectQuerySync, {
+                  dashboardId,
+                  http: core.http,
+                  savedObjectsClient: core.savedObjects.client, // Pass savedObjectsClient
+                  removeBanner: () => {
+                    if (this.bannerId) {
+                      core.overlays.banners.remove(this.bannerId);
+                      this.bannerId = null;
+                    }
+                  },
+                })
+              )
+            );
+          }
+        } else if (!isDashboardViewMatch && this.bannerId) {
+          core.overlays.banners.remove(this.bannerId);
+          this.bannerId = null;
+        }
+      }
+    });
+
     return {
       getAuthenticationMethodRegistry: () => this.authMethodsRegistry,
     };
   }
 
-  public stop() {}
+  public stop() {
+    // Clean up the banner on plugin stop
+    if (this.bannerId && this.core) {
+      this.core.overlays.banners.remove(this.bannerId);
+      this.bannerId = null;
+    }
+  }
 }
