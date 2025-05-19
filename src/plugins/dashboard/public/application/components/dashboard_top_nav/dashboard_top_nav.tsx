@@ -52,6 +52,10 @@ const TopNav = ({
   const [isFullScreenMode, setIsFullScreenMode] = useState<any>();
 
   const { services } = useOpenSearchDashboards<DashboardServices>();
+  console.log('TopNav: Services:', services);
+  console.log('TopNav: Navigation service:', services.navigation);
+  console.log('TopNav: Navigation UI:', services.navigation?.ui);
+  console.log('TopNav: enum:', TopNavMenuItemRenderType);
   const { TopNavMenu, HeaderControl } = services.navigation.ui;
   const { dashboardConfig, setHeaderActionMenu } = services;
   const { setAppRightControls } = services.application;
@@ -151,7 +155,8 @@ const TopNav = ({
             defaultMessage: 'New dashboard',
           })
         }
-        showSearchBar={showSearchBar && TopNavMenuItemRenderType.IN_PORTAL}
+        // showSearchBar={showSearchBar && TopNavMenuItemRenderType.IN_PORTAL}
+        showSearchBar={showSearchBar}
         showQueryBar={showQueryBar}
         showQueryInput={showQueryInput}
         showDatePicker={showDatePicker}
