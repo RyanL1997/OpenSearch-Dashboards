@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useObservable } from 'react-use';
+
 import React from 'react';
 import { i18n } from '@osd/i18n';
 import { DataSourcePluginSetup } from 'src/plugins/data_source/public';
@@ -15,6 +17,8 @@ import {
   MountPoint,
   Plugin,
 } from '../../../core/public';
+import { registerDashboardExtension, DashboardExtensionDependencies } from '../../dashboard/public';
+import { TestDashboardExtension } from './components/direct_query_data_sources_components/direct_query_sync/test_dashboard_extension';
 
 import { PLUGIN_NAME } from '../common';
 import { createDataSourceSelector } from './components/data_source_selector/create_data_source_selector';
@@ -110,6 +114,11 @@ export class DataSourceManagementPlugin
   private authMethodsRegistry = new AuthenticationMethodRegistry();
   private dataSourceSelection = new DataSourceSelectionService();
   private featureFlagStatus: boolean = false;
+
+  private getTestComponent(dependencies: DashboardExtensionDependencies): React.ReactElement {
+    return React.createElement(TestDashboardExtension, { dependencies });
+  }
+
   public setup(
     core: CoreSetup<DataSourceManagementPluginStart>,
     { management, indexPatternManagement, dataSource }: DataSourceManagementSetupDependencies
@@ -210,6 +219,15 @@ export class DataSourceManagementPlugin
     setHideLocalCluster({ enabled: dataSource!.hideLocalCluster });
     // This instance will be got in each data source selector component.
     setDataSourceSelection(this.dataSourceSelection);
+
+    // Register the test dashboard extension
+    console.log('DataSourceManagementPlugin: Registering test dashboard extension');
+    registerDashboardExtension({
+      id: 'test-dashboard-extension',
+      order: 1,
+      isEnabled: async () => Promise.resolve(true), // Always enabled for testing
+      getComponent: (dependencies) => this.getTestComponent(dependencies),
+    });
 
     return {
       registerAuthenticationMethod,

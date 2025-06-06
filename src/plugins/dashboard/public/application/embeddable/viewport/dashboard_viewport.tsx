@@ -30,17 +30,30 @@
 
 import React from 'react';
 import { Subscription } from 'rxjs';
-import { Logos } from 'opensearch-dashboards/public';
-import { PanelState, EmbeddableStart } from '../../../../../embeddable/public';
+import {
+  Logos,
+  SavedObjectsClientContract,
+  HttpStart,
+  NotificationsStart,
+} from 'opensearch-dashboards/public';
+import { EmbeddableStart } from '../../../../../embeddable/public';
 import { DashboardContainer, DashboardReactContextValue } from '../dashboard_container';
 import { DashboardGrid } from '../grid';
 import { context } from '../../../../../opensearch_dashboards_react/public';
+import {
+  DashboardExtensions,
+  getDashboardExtensions,
+} from '../../../ui/dashboard_extensions/dashboard_extensions';
+import { DashboardPanelState } from '../types';
 
 export interface DashboardViewportProps {
   container: DashboardContainer;
   PanelComponent: EmbeddableStart['EmbeddablePanel'];
   renderEmpty?: () => React.ReactNode;
   logos: Logos;
+  savedObjectsClient: SavedObjectsClientContract;
+  http: HttpStart;
+  notifications: NotificationsStart;
 }
 
 interface State {
@@ -48,7 +61,7 @@ interface State {
   useMargins: boolean;
   title: string;
   description?: string;
-  panels: { [key: string]: PanelState };
+  panels: { [key: string]: DashboardPanelState };
   isEmbeddedExternally?: boolean;
   isEmptyState?: boolean;
 }
@@ -88,6 +101,7 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
         useMargins,
         title,
         description,
+        panels,
         isEmbeddedExternally,
         isEmptyState,
       } = this.props.container.getInput();
@@ -95,6 +109,7 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
         this.setState({
           isFullScreenMode,
           description,
+          panels,
           useMargins,
           title,
           isEmbeddedExternally,
@@ -135,7 +150,7 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
   }
 
   private renderContainerScreen() {
-    const { container, PanelComponent } = this.props;
+    const { container, PanelComponent, http, notifications, savedObjectsClient } = this.props;
     const {
       isEmbeddedExternally,
       isFullScreenMode,
@@ -144,6 +159,15 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
       description,
       useMargins,
     } = this.state;
+
+    // Dependencies for dashboard extensions
+    const extensionDependencies = {
+      http,
+      notifications,
+      savedObjectsClient,
+      panels,
+    };
+
     return (
       <div
         data-shared-items-count={Object.values(panels).length}
@@ -159,6 +183,11 @@ export class DashboardViewport extends React.Component<DashboardViewportProps, S
             logos={this.props.logos}
           />
         )}
+        {/* Render dashboard extensions above the grid */}
+        <DashboardExtensions
+          configs={getDashboardExtensions()}
+          dependencies={extensionDependencies}
+        />
         <DashboardGrid container={container} PanelComponent={PanelComponent} />
       </div>
     );

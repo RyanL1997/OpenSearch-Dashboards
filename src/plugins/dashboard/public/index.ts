@@ -58,6 +58,15 @@ export { SavedObjectDashboard } from './saved_dashboards';
 export { SavedDashboardPanel } from './types';
 export { AttributeService, ATTRIBUTE_SERVICE_KEY } from './attribute_service';
 
+// Re-export dashboard extensions for use by other plugins
+export {
+  DashboardExtensionConfig,
+  DashboardExtensionDependencies,
+  DashboardExtensions,
+  registerDashboardExtension,
+  getDashboardExtensions,
+} from './ui/dashboard_extensions/dashboard_extensions';
+
 export function plugin(initializerContext: PluginInitializerContext) {
   return new DashboardPlugin(initializerContext);
 }
