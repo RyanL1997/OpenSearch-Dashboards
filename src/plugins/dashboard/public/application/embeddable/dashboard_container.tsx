@@ -59,8 +59,10 @@ import {
   OpenSearchDashboardsReactContext,
   OpenSearchDashboardsReactContextValue,
 } from '../../../../opensearch_dashboards_react/public';
+import { DirectQuerySyncProvider } from './direct_query_sync/direct_query_sync_context';
 import { PLACEHOLDER_EMBEDDABLE } from './placeholder';
 import { PanelPlacementMethod, IPanelPlacementArgs } from './panel/dashboard_panel_placement';
+import { DashboardFeatureFlagConfig } from '../../plugin';
 
 export interface DashboardContainerInput extends ContainerInput {
   viewMode: ViewMode;
@@ -104,6 +106,9 @@ export interface DashboardContainerOptions {
   SavedObjectFinder: React.ComponentType<any>;
   ExitFullScreenButton: React.ComponentType<any>;
   uiActions: UiActionsStart;
+  savedObjectsClient: CoreStart['savedObjects']['client'];
+  http: CoreStart['http'];
+  dashboardFeatureFlagConfig: DashboardFeatureFlagConfig;
 }
 
 export type DashboardReactContextValue = OpenSearchDashboardsReactContextValue<
@@ -121,6 +126,9 @@ export class DashboardContainer extends Container<InheritedChildInput, Dashboard
 
   private embeddablePanel: EmbeddableStart['EmbeddablePanel'];
   private readonly logos: Logos;
+  private hasRendered: boolean = false;
+  private renderCount: number = 0;
+  private instanceId: string;
 
   constructor(
     initialInput: DashboardContainerInput,
@@ -136,8 +144,20 @@ export class DashboardContainer extends Container<InheritedChildInput, Dashboard
       options.embeddable.getEmbeddableFactory,
       parent
     );
+    this.instanceId = uuid.v4();
+    console.log(`[DashboardContainer] Constructor called (instanceId: ${this.instanceId})`);
     this.embeddablePanel = options.embeddable.getEmbeddablePanel(stateTransfer);
     this.logos = options.chrome.logos;
+  }
+
+  public componentDidMount() {
+    console.log(`[DashboardContainer] componentDidMount (instanceId: ${this.instanceId})`);
+  }
+
+  public componentWillUnmount() {
+    console.log(`[DashboardContainer] Unmounting (instanceId: ${this.instanceId})`);
+    this.hasRendered = false;
+    this.renderCount = 0;
   }
 
   protected createNewPanelState<
@@ -190,10 +210,6 @@ export class DashboardContainer extends Container<InheritedChildInput, Dashboard
     previousPanelState: DashboardPanelState<EmbeddableInput>,
     newPanelState: Partial<PanelState>
   ) {
-    // TODO: In the current infrastructure, embeddables in a container do not react properly to
-    // changes. Removing the existing embeddable, and adding a new one is a temporary workaround
-    // until the container logic is fixed.
-
     const finalPanels = { ...this.input.panels };
     delete finalPanels[previousPanelState.explicitInput.id];
     const newPanelId = newPanelState.explicitInput?.id ? newPanelState.explicitInput.id : uuid.v4();
@@ -235,20 +251,48 @@ export class DashboardContainer extends Container<InheritedChildInput, Dashboard
   }
 
   public render(dom: HTMLElement) {
-    ReactDOM.render(
-      <I18nProvider>
-        <OpenSearchDashboardsContextProvider services={this.options}>
-          <DashboardViewport
-            key={this.id}
-            renderEmpty={this.renderEmpty}
-            logos={this.logos}
-            container={this}
-            PanelComponent={this.embeddablePanel}
-          />
-        </OpenSearchDashboardsContextProvider>
-      </I18nProvider>,
-      dom
+    this.renderCount++;
+    console.log(
+      `[DashboardContainer] Rendering (instanceId: ${this.instanceId}, count: ${this.renderCount}, hasRendered: ${this.hasRendered})`
     );
+
+    const DashboardContainerWrapper = () => {
+      return (
+        <I18nProvider>
+          <OpenSearchDashboardsContextProvider services={this.options}>
+            <DirectQuerySyncProvider
+              savedObjectsClient={this.options.savedObjectsClient}
+              http={this.options.http}
+              notifications={this.options.notifications}
+              isDirectQuerySyncEnabled={
+                this.options.dashboardFeatureFlagConfig.directQueryConnectionSync
+              }
+              container={this}
+            >
+              <DashboardViewport
+                key={this.id}
+                renderEmpty={this.renderEmpty}
+                logos={this.logos}
+                container={this}
+                PanelComponent={this.embeddablePanel}
+              />
+            </DirectQuerySyncProvider>
+          </OpenSearchDashboardsContextProvider>
+        </I18nProvider>
+      );
+    };
+
+    if (!this.hasRendered) {
+      console.log(
+        `[DashboardContainer] Initial render with ReactDOM.render (instanceId: ${this.instanceId})`
+      );
+      ReactDOM.render(<DashboardContainerWrapper />, dom);
+      this.hasRendered = true;
+    } else {
+      console.log(
+        `[DashboardContainer] Skipping ReactDOM.render, already rendered (instanceId: ${this.instanceId})`
+      );
+    }
   }
 
   protected getInheritedInput(id: string): InheritedChildInput {

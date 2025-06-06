@@ -921,6 +921,7 @@ exports[`Dashboard top nav render in embed mode 1`] = `
             },
             "savedObjectsClient": Object {
               "find": [MockFunction],
+              "get": [MockFunction],
             },
             "savedObjectsPublic": Object {
               "settings": Object {
@@ -2049,6 +2050,7 @@ exports[`Dashboard top nav render in embed mode, and force hide filter bar 1`] =
             },
             "savedObjectsClient": Object {
               "find": [MockFunction],
+              "get": [MockFunction],
             },
             "savedObjectsPublic": Object {
               "settings": Object {
@@ -3177,6 +3179,7 @@ exports[`Dashboard top nav render in embed mode, components can be forced show b
             },
             "savedObjectsClient": Object {
               "find": [MockFunction],
+              "get": [MockFunction],
             },
             "savedObjectsPublic": Object {
               "settings": Object {
@@ -4305,6 +4308,7 @@ exports[`Dashboard top nav render in full screen mode with appended URL param bu
             },
             "savedObjectsClient": Object {
               "find": [MockFunction],
+              "get": [MockFunction],
             },
             "savedObjectsPublic": Object {
               "settings": Object {
@@ -5433,6 +5437,7 @@ exports[`Dashboard top nav render in full screen mode, no componenets should be 
             },
             "savedObjectsClient": Object {
               "find": [MockFunction],
+              "get": [MockFunction],
             },
             "savedObjectsPublic": Object {
               "settings": Object {
@@ -6561,6 +6566,7 @@ exports[`Dashboard top nav render with all components 1`] = `
             },
             "savedObjectsClient": Object {
               "find": [MockFunction],
+              "get": [MockFunction],
             },
             "savedObjectsPublic": Object {
               "settings": Object {
