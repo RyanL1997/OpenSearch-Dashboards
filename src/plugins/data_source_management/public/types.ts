@@ -18,10 +18,13 @@ import { ManagementAppMountParams } from 'src/plugins/management/public';
 import { i18n } from '@osd/i18n';
 import { EuiComboBoxOptionOption } from '@elastic/eui';
 import { NavigationPublicPluginStart } from 'src/plugins/navigation/public';
+import { EmbeddableOutput } from 'src/plugins/embeddable/public';
 import { AuthType } from '../../data_source/common/data_sources';
 import { SigV4ServiceName } from '../../data_source/common/data_sources';
 import { OpenSearchDashboardsReactContextValue } from '../../opensearch_dashboards_react/public';
 import { AuthenticationMethodRegistry } from './auth_registry';
+// Import embeddable framework types
+import { DirectQueryLoadingStatus } from '../framework/types';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface DataSourceManagementPluginStart {}
@@ -199,4 +202,14 @@ export interface PermissionsConfigurationProps {
   setSelectedRoles: React.Dispatch<React.SetStateAction<Role[]>>;
   layout: 'horizontal' | 'vertical';
   hasSecurityAccess: boolean;
+}
+
+// Types for Direct Query Sync Embeddable Panel
+export interface DirectQuerySyncInput {
+  id: string;
+}
+
+export interface DirectQuerySyncOutput extends EmbeddableOutput {
+  loadStatus: DirectQueryLoadingStatus;
+  mdsId: string;
 }

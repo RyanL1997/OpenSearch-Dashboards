@@ -638,3 +638,15 @@ export const isPluginInstalled = async (
     return false;
   }
 };
+
+export function intervalAsMinutes(interval: number): string {
+  const minutes = Math.floor(interval / 60000);
+  return minutes === 1
+    ? i18n.translate('dataSourcesManagement.directQuerySync.intervalAsMinutes.oneMinute', {
+        defaultMessage: '1 minute',
+      })
+    : i18n.translate('dataSourcesManagement.directQuerySync.intervalAsMinutes.multipleMinutes', {
+        defaultMessage: '{minutes} minutes',
+        values: { minutes },
+      });
+}
