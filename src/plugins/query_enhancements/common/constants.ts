@@ -44,6 +44,7 @@ export const API = {
   },
   PPL_CANCEL: `${BASE_API}/ppl/cancel`,
   PPL_GRAMMAR: `${BASE_API}/ppl/grammar`,
+  PPL_LINT: `${BASE_API}/ppl/lint`,
   AGENT_API: {
     CONFIG_EXISTS: `${BASE_API_ASSISTANT}/agent_config/_exists`,
   },
@@ -61,6 +62,7 @@ export const URI = {
   OBSERVABILITY: '/_plugins/_observability',
   DATA_CONNECTIONS: '/_plugins/_query/_datasources',
   PPL_BUNDLE: '/_plugins/_ppl/_grammar',
+  PPL_LINT: '/_plugins/_ppl/_lint',
 };
 
 export const OPENSEARCH_API = {

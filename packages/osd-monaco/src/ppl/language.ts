@@ -13,6 +13,7 @@ import { resolvePPLValidationResult } from './validation_provider';
 
 const PPL_LANGUAGE_ID = ID;
 const OWNER = 'PPL_WORKER';
+const LINT_OWNER = 'PPL_LINTER';
 
 // PPL worker proxy service for worker-based syntax highlighting
 const pplWorkerProxyService = new PPLWorkerProxyService();
@@ -180,6 +181,112 @@ export const revalidatePPLModel = async (model: monaco.editor.IModel) => {
   await processSyntaxHighlighting(model);
 };
 
+// --- PPL Lint integration ---
+
+let lintTimer: ReturnType<typeof setTimeout> | undefined;
+let lintAbortController: AbortController | undefined;
+
+/**
+ * Calls the backend _lint endpoint and renders warning markers.
+ * Debounced to avoid flooding the server on every keystroke.
+ */
+const processLintHighlighting = (model: monaco.editor.IModel) => {
+  if (lintTimer) clearTimeout(lintTimer);
+
+  lintTimer = setTimeout(async () => {
+    if (model.getLanguageId() !== PPL_LANGUAGE_ID) {
+      monaco.editor.setModelMarkers(model, LINT_OWNER, []);
+      return;
+    }
+
+    const content = model.getValue();
+    if (!content.trim()) {
+      monaco.editor.setModelMarkers(model, LINT_OWNER, []);
+      return;
+    }
+
+    // Cancel any in-flight request
+    if (lintAbortController) lintAbortController.abort();
+    lintAbortController = new AbortController();
+
+    try {
+      const response = await fetch('/api/enhancements/ppl/lint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'osd-xsrf': 'true' },
+        body: JSON.stringify({ query: content }),
+        signal: lintAbortController.signal,
+      });
+
+      if (!response.ok) {
+        monaco.editor.setModelMarkers(model, LINT_OWNER, []);
+        return;
+      }
+
+      const data = await response.json();
+      const diagnostics: Array<{
+        severity: string;
+        message: string;
+        command: string;
+        suggestion?: string;
+      }> = data.diagnostics || [];
+
+      if (diagnostics.length === 0) {
+        monaco.editor.setModelMarkers(model, LINT_OWNER, []);
+        return;
+      }
+
+      const markers: monaco.editor.IMarkerData[] = diagnostics.map((d) => {
+        // Try to find the command keyword position in the query text for precise underline
+        const cmdRegex = new RegExp(`\\|\\s*(${d.command})\\b`, 'i');
+        const match = content.match(cmdRegex);
+        let startCol = 1;
+        let endCol = content.length + 1;
+        if (match && match.index !== undefined) {
+          // Underline the command keyword itself
+          const cmdStart = match.index + match[0].indexOf(match[1]);
+          startCol = cmdStart + 1; // Monaco is 1-based
+          endCol = startCol + match[1].length;
+        }
+
+        const message = d.suggestion ? `${d.message}\n\n💡 ${d.suggestion}` : d.message;
+
+        const PPL_DOCS_BASE =
+          'https://opensearch.org/docs/latest/search-plugins/sql/ppl/functions/';
+        const CMD_DOC_URLS: Record<string, string> = {
+          head: 'https://opensearch.org/docs/latest/search-plugins/sql/ppl/cmd/head/',
+          stats: 'https://opensearch.org/docs/latest/search-plugins/sql/ppl/cmd/stats/',
+          sort: 'https://opensearch.org/docs/latest/search-plugins/sql/ppl/cmd/sort/',
+          where: 'https://opensearch.org/docs/latest/search-plugins/sql/ppl/cmd/where/',
+          dedup: 'https://opensearch.org/docs/latest/search-plugins/sql/ppl/cmd/dedup/',
+          eval: 'https://opensearch.org/docs/latest/search-plugins/sql/ppl/cmd/eval/',
+          fields: 'https://opensearch.org/docs/latest/search-plugins/sql/ppl/cmd/fields/',
+        };
+        const docUrl = CMD_DOC_URLS[d.command.toLowerCase()] || `${PPL_DOCS_BASE}`;
+
+        return {
+          severity: monaco.MarkerSeverity.Warning,
+          message,
+          startLineNumber: 1,
+          startColumn: startCol,
+          endLineNumber: 1,
+          endColumn: endCol,
+          code: {
+            value: 'View Documentation',
+            target: monaco.Uri.parse(docUrl),
+          },
+        };
+      });
+
+      monaco.editor.setModelMarkers(model, LINT_OWNER, markers);
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        // Silently clear on error — lint is advisory
+        monaco.editor.setModelMarkers(model, LINT_OWNER, []);
+      }
+    }
+  }, 500); // 500ms debounce
+};
+
 /**
  * Set up PPL document range formatting provider
  */
@@ -202,6 +309,7 @@ const setupPPLSyntaxHighlighting = () => {
       model.onDidChangeContent(async () => {
         if (model.getLanguageId() === PPL_LANGUAGE_ID) {
           await processSyntaxHighlighting(model);
+          processLintHighlighting(model);
         }
       })
     );
@@ -211,8 +319,10 @@ const setupPPLSyntaxHighlighting = () => {
       model.onDidChangeLanguage(async () => {
         if (model.getLanguageId() === PPL_LANGUAGE_ID) {
           await processSyntaxHighlighting(model);
+          processLintHighlighting(model);
         } else {
           monaco.editor.setModelMarkers(model, OWNER, []);
+          monaco.editor.setModelMarkers(model, LINT_OWNER, []);
         }
       })
     );
@@ -220,6 +330,7 @@ const setupPPLSyntaxHighlighting = () => {
     // Process immediately if already PPL
     if (model.getLanguageId() === PPL_LANGUAGE_ID) {
       processSyntaxHighlighting(model);
+      processLintHighlighting(model);
     }
   };
 
@@ -230,6 +341,7 @@ const setupPPLSyntaxHighlighting = () => {
   disposables.push(
     monaco.editor.onWillDisposeModel((model) => {
       monaco.editor.setModelMarkers(model, OWNER, []);
+      monaco.editor.setModelMarkers(model, LINT_OWNER, []);
     })
   );
 

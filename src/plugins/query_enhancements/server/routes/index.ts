@@ -192,4 +192,40 @@ export function defineRoutes(
   registerPPLCancelRoute(router, logger);
 
   definePPLBundleRoute(logger, router);
+  definePPLLintRoute(logger, router);
+}
+
+/**
+ * Defines route for PPL lint endpoint.
+ * Forwards requests to OpenSearch /_plugins/_ppl/_lint
+ */
+export function definePPLLintRoute(logger: Logger, router: IRouter) {
+  router.post(
+    {
+      path: API.PPL_LINT,
+      validate: {
+        body: schema.object({
+          query: schema.string(),
+        }),
+      },
+    },
+    async (context, req, res): Promise<IOpenSearchDashboardsResponse<any | ResponseError>> => {
+      try {
+        const opensearchClient = context.core.opensearch.client.asCurrentUser;
+        const result = await opensearchClient.transport.request({
+          method: 'POST',
+          path: URI.PPL_LINT,
+          body: req.body,
+        });
+        const body = result?.body ?? result;
+        return res.ok({ body });
+      } catch (err: any) {
+        logger.debug(`PPL lint error: ${err.message || err}`);
+        return res.custom({
+          statusCode: coerceStatusCode(err.status || err.statusCode || err?.meta?.statusCode),
+          body: err.message || 'Failed to lint PPL query',
+        });
+      }
+    }
+  );
 }
