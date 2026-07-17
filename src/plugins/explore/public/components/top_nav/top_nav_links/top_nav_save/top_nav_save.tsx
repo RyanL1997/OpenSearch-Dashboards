@@ -23,6 +23,7 @@ import {
   showSaveModal,
 } from '../../../../../../saved_objects/public';
 import { saveSavedExplore } from '../../../../helpers/save_explore';
+import { isSlowQuerySaveBlocked } from '../../../../helpers/slow_query_guard';
 import { TabState } from '../../../../application/utils/state_management/slices';
 import { TabDefinition } from '../../../../services/tab_registry/tab_registry_service';
 import { saveStateToSavedObject } from '../../../../saved_explore/transforms';
@@ -59,6 +60,12 @@ export const getSaveButtonRun =
   ): TopNavMenuIconRun =>
   () => {
     if (!savedExplore) return;
+
+    // Slow-query save gate (PoC): block before the save dialog opens so the user
+    // never gets to name the search.
+    if (isSlowQuerySaveBlocked(services)) {
+      return;
+    }
 
     const onSave = async ({
       newTitle,
