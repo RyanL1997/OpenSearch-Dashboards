@@ -24,6 +24,7 @@ import {
 import { saveStateToSavedObject } from '../../saved_explore/transforms';
 import { addToDashboard } from './utils/add_to_dashboard';
 import { saveSavedExplore } from '../../helpers/save_explore';
+import { confirmSlowQuerySave } from '../../helpers/slow_query_guard';
 import { useCurrentExploreId } from '../../application/utils/hooks/use_current_explore_id';
 import { useSearchContext } from '../query_panel/utils/use_search_context';
 import { ExploreServices } from '../../types';
@@ -53,9 +54,14 @@ export const SaveAndAddButtonWithModal = ({ dataset }: { dataset?: IndexPattern 
 
   const transformationService = visualizationBuilder.getTransformationService();
 
-  const handleAddToDashboard = useCallback(() => {
+  const handleAddToDashboard = useCallback(async () => {
+    // Slow-query save warning (PoC): warn + confirm before opening the save flow.
+    const proceed = await confirmSlowQuerySave(services);
+    if (!proceed) {
+      return;
+    }
     setShowAddToDashboardModal(true);
-  }, []);
+  }, [services]);
 
   keyboardShortcut?.useKeyboardShortcut({
     id: 'addToDashboard',
@@ -229,11 +235,7 @@ export const SaveAndAddButtonWithModal = ({ dataset }: { dataset?: IndexPattern 
 
   return (
     <>
-      <EuiButtonEmpty
-        size="s"
-        onClick={() => setShowAddToDashboardModal(true)}
-        data-test-subj="addToDashboardButton"
-      >
+      <EuiButtonEmpty size="s" onClick={handleAddToDashboard} data-test-subj="addToDashboardButton">
         {i18n.translate('explore.addtoDashboardButton.name', {
           defaultMessage: 'Add to dashboard',
         })}

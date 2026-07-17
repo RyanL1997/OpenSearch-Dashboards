@@ -23,6 +23,7 @@ import {
   showSaveModal,
 } from '../../../../../../saved_objects/public';
 import { saveSavedExplore } from '../../../../helpers/save_explore';
+import { confirmSlowQuerySave } from '../../../../helpers/slow_query_guard';
 import { TabState } from '../../../../application/utils/state_management/slices';
 import { TabDefinition } from '../../../../services/tab_registry/tab_registry_service';
 import { saveStateToSavedObject } from '../../../../saved_explore/transforms';
@@ -57,8 +58,12 @@ export const getSaveButtonRun =
     saveStateProps: SaveStateProps,
     savedExplore?: SavedExplore
   ): TopNavMenuIconRun =>
-  () => {
+  async () => {
     if (!savedExplore) return;
+
+    // Slow-query save warning (PoC): warn + confirm before opening the save modal.
+    const proceed = await confirmSlowQuerySave(services);
+    if (!proceed) return;
 
     const onSave = async ({
       newTitle,

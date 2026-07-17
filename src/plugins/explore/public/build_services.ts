@@ -106,6 +106,7 @@ export function buildServices(
     // Add supportedTypes from config
     supportedTypes,
     sqlSupportEnabled: config.sqlSupport?.enabled ?? false,
+    slowQueryGuardEnabled: config.slowQueryGuard?.enabled ?? false,
     isDatasetManagementEnabled,
     dataImporterConfig,
     dataSourceEnabled,

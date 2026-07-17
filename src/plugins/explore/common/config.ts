@@ -23,6 +23,12 @@ export const configSchema = schema.object({
   sqlSupport: schema.object({
     enabled: schema.boolean({ defaultValue: false }),
   }),
+  // Slow-query save gate (frontend PoC): when enabled, saving a PPL query as a
+  // visualization first warns the user, who must confirm before the save runs.
+  // Placeholder for the future backend that classifies slow queries.
+  slowQueryGuard: schema.object({
+    enabled: schema.boolean({ defaultValue: false }),
+  }),
 });
 
 export type ConfigSchema = TypeOf<typeof configSchema>;
