@@ -20,7 +20,6 @@ import { useSearchContext } from '../../../components/query_panel/utils/use_sear
 import { Query } from '../../../../../data/common';
 
 import { SavedExplore } from '../../../saved_explore';
-import { confirmSlowQuerySave } from '../../../helpers/slow_query_guard';
 import { SaveVisModal } from './save_vis_modal';
 import { useCurrentExploreId } from '../../../application/utils/hooks/use_current_explore_id';
 import { useVisualizationBuilder } from '../hooks/use_visualization_builder';
@@ -223,11 +222,6 @@ export const SaveVisButton = () => {
   }, [stateTransfer, services.scopedHistory, exploreId, savedExplore, originatingApp]);
 
   const handleSaveButtonClick = useCallback(async () => {
-    // Slow-query save warning (PoC): warn + confirm before the modal or a direct save.
-    const proceed = await confirmSlowQuerySave(services);
-    if (!proceed) {
-      return;
-    }
     // If exploreId is defined, we're editing an existing saved visualization
     // Directly save without showing the modal
     if (exploreId !== undefined && savedExplore) {
@@ -245,7 +239,7 @@ export const SaveVisButton = () => {
       // Show modal for new visualizations
       setShowModal(true);
     }
-  }, [exploreId, savedExplore, handleSave, isVisDirty, isQueryEditorDirty, navigateTo, services]);
+  }, [exploreId, savedExplore, handleSave, isVisDirty, isQueryEditorDirty, navigateTo]);
 
   const saveButton = (
     <EuiButtonEmpty
@@ -280,6 +274,7 @@ export const SaveVisButton = () => {
           savedExploreId={exploreId}
           onCancel={() => setShowModal(false)}
           onConfirm={handleSave}
+          showComplexQueryWarning={services.slowQueryGuardEnabled}
         />
       )}
     </EuiFlexGroup>

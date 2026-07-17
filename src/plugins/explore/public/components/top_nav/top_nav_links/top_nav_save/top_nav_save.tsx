@@ -23,7 +23,7 @@ import {
   showSaveModal,
 } from '../../../../../../saved_objects/public';
 import { saveSavedExplore } from '../../../../helpers/save_explore';
-import { confirmSlowQuerySave } from '../../../../helpers/slow_query_guard';
+import { SlowQueryWarningCallout } from '../../../../helpers/slow_query_warning';
 import { TabState } from '../../../../application/utils/state_management/slices';
 import { TabDefinition } from '../../../../services/tab_registry/tab_registry_service';
 import { saveStateToSavedObject } from '../../../../saved_explore/transforms';
@@ -58,12 +58,8 @@ export const getSaveButtonRun =
     saveStateProps: SaveStateProps,
     savedExplore?: SavedExplore
   ): TopNavMenuIconRun =>
-  async () => {
+  () => {
     if (!savedExplore) return;
-
-    // Slow-query save warning (PoC): warn + confirm before opening the save modal.
-    const proceed = await confirmSlowQuerySave(services);
-    if (!proceed) return;
 
     const onSave = async ({
       newTitle,
@@ -118,6 +114,9 @@ export const getSaveButtonRun =
         showCopyOnSave={!!savedExplore.id}
         // TODO: Does this need to be type "explore"?
         objectType="discover"
+        // Complex-query warning banner (PoC): shown inside the save window instead of a
+        // separate pre-save confirm dialog.
+        options={services.slowQueryGuardEnabled ? <SlowQueryWarningCallout /> : undefined}
         description={i18n.translate('explore.localMenu.saveSaveSearchDescription', {
           defaultMessage:
             'Save your Discover search so you can use it in visualizations and dashboards',
